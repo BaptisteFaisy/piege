@@ -31,6 +31,9 @@ OUTIL_REJOUE = "Cible___rejoue"
 OUTILS_CIBLE = (OUTIL_SONDE, OUTIL_MESURE, OUTIL_REJOUE, OUTIL_DEPOT)
 ROLES_AUTORISES_CORRECTIF = ("commanditaire", "analyste")
 TYPES_CORRECTIF_APPLICABLES = ("garde_fou", "politique")
+# Volume moyen d'un échange (annexe F.2) : sert à estimer le besoin en jetons
+# d'une technique, qui n'est pas porté par l'enregistrement Technique.
+JETONS_PAR_ECHANGE = 3850
 
 EXCEPTIONS = {
     "mandat_invalide": MandatInvalide,
@@ -188,8 +191,14 @@ def faits_pour(mandat: Mandat, technique: Technique, cible: Application,
                campagne: Campagne, arret_urgence: bool = False,
                appels_restants: Optional[int] = None,
                jetons_restants: Optional[int] = None,
-               maintenant: Optional[str] = None) -> dict:
-    """Construit le jeu de faits structuré depuis les enregistrements gelés."""
+               maintenant: Optional[str] = None,
+               technique_budget_jetons: Optional[int] = None) -> dict:
+    """Construit le jeu de faits structuré depuis les enregistrements gelés.
+
+    `technique_budget_jetons` n'est pas porté par l'enregistrement
+    `Technique` : il est estimé depuis le nombre de tours et le volume moyen
+    d'un échange (annexe F.2 : 3 500 jetons en entrée, 350 en sortie).
+    """
     return {
         "outil": OUTIL_SONDE,
         "mandat_statut": mandat.statut.value,
@@ -207,20 +216,29 @@ def faits_pour(mandat: Mandat, technique: Technique, cible: Application,
         "production_autorisee": bool(mandat.production_autorisee),
         "campagne_appels_restants": appels_restants,
         "campagne_jetons_restants": jetons_restants,
-        "technique_budget_jetons": 0,
+        "technique_budget_jetons": (technique_budget_jetons
+                                    if technique_budget_jetons is not None
+                                    else budget_jetons_technique(technique)),
         "arret_urgence": bool(arret_urgence),
         "tenant_id": mandat.tenant_id,
     }
+
+
+def budget_jetons_technique(technique: Technique) -> int:
+    """Estimation du besoin en jetons d'une technique (annexe F.2)."""
+    return max(1, int(technique.tours_max)) * JETONS_PAR_ECHANGE
 
 
 def exiger(mandat: Mandat, technique: Technique, cible: Application,
            campagne: Campagne, arret_urgence: bool = False,
            appels_restants: Optional[int] = None,
            jetons_restants: Optional[int] = None,
-           maintenant: Optional[str] = None) -> Decision:
+           maintenant: Optional[str] = None,
+           technique_budget_jetons: Optional[int] = None) -> Decision:
     """Évalue la politique d'une sonde à partir des enregistrements du domaine."""
     faits = faits_pour(mandat, technique, cible, campagne, arret_urgence,
-                        appels_restants, jetons_restants, maintenant)
+                       appels_restants, jetons_restants, maintenant,
+                       technique_budget_jetons)
     return evaluer(OUTIL_SONDE, faits)
 
 

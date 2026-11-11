@@ -91,7 +91,8 @@ def valider(mandat: Optional[Mandat], maintenant: Optional[str] = None) -> Manda
                              details={"regle": "mandat.present"})
     if mandat.statut is not StatutMandat.VALIDE:
         raise MandatInvalide("mandat %s au statut %s : exécution refusée"
-                             % (mandat.id, mandat.statut.value),
+                             % (mandat.id, getattr(mandat.statut, "value",
+                                                   mandat.statut)),
                              details={"regle": "mandat.statut"})
     if mandat.signature and not signature_valide(mandat):
         raise MandatInvalide("signature du mandat %s incohérente avec son "
