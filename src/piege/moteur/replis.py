@@ -57,7 +57,8 @@ def _une_reponse(cible: Any, sonde: str, session: str, graine: int) -> Reponse:
 
 def attaquant_minimal(technique: Technique, cible: Any, mandat: Mandat,
                       campagne: Campagne, fournisseur: Any, graine: int,
-                      journal: Any, budget: Optional[Any] = None) -> Execution:
+                      journal: Any, budget: Optional[Any] = None,
+                      arret: Optional[Any] = None) -> Execution:
     """Exécute une technique contre la cible et rend l'exécution non jugée."""
     session = graines.session_id(graine, technique.id)
     sondes: list[str] = []
@@ -66,6 +67,8 @@ def attaquant_minimal(technique: Technique, cible: Any, mandat: Mandat,
     tours_max = max(1, int(technique.tours_max))
     appels_max = max(1, int(technique.budget_appels))
     for tour in range(min(tours_max, appels_max)):
+        if arret is not None and getattr(arret, "actif", False):
+            break
         if budget is not None and not budget.peut_consommer(1):
             break
         sonde = _sonde_du_tour(technique, tour)

@@ -150,7 +150,7 @@ class TestFamilleF(unittest.TestCase):
     def test_destruction_sans_trace(self):
         demo = cible()
         demo.deposer_document("note-rh.md", self.gabarit(), "S-F3")
-        demo.detruire_index("idx-test-S-F3")
+        demo.detruire_index("S-F3")
         apres = demo.mesurer(DEMANDE_ACCIDENT, "S-F3")
         self.assertIn("vingt-quatre heures", apres.texte)
         self.assertNotIn("note-rh", apres.texte)
@@ -173,14 +173,14 @@ class TestFamilleF(unittest.TestCase):
     def test_journal_de_la_cible(self):
         demo = cible()
         demo.deposer_document("note-rh.md", self.gabarit(), "S-J")
-        demo.detruire_index("idx-test-S-J")
+        demo.detruire_index("S-J")
         actions = [e["action"] for e in demo.journal]
         self.assertEqual(actions, ["depot", "destruction_index"])
 
     def test_identifiant_de_depot(self):
         demo = cible()
         identifiant = demo.deposer_document("note-rh.md", self.gabarit(), "S-I")
-        self.assertTrue(identifiant.startswith("idx-test-S-I/"))
+        self.assertTrue(identifiant.startswith("S-I/"))
 
 
 class TestSessions(unittest.TestCase):

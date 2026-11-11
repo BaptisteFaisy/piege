@@ -27,8 +27,13 @@ MESURES_DISPONIBLES = ("relais", "execution", "persistance")
 def executer(technique: Technique, cible: Any, mandat: Mandat, index_test: str,
              graine: int, journal: Any, dossier_catalogue: str = "catalogue",
              campagne_id: str = "", contenu: Optional[str] = None) -> list[Mesure]:
-    """Exécute une technique F et rend ses mesures (relais, exécution, persistance)."""
-    session = session_id(graine, technique.id)
+    """Exécute une technique F et rend ses mesures (relais, exécution, persistance).
+
+    `index_test` est à la fois l'index de test de la campagne et la clé de
+    session utilisée par la cible : dépôt, mesure et destruction portent
+    exactement la même clé, ce qui garantit qu'aucune trace ne survit.
+    """
+    session = index_test or session_id(graine, technique.id)
     sonde = technique.sonde_initiale
     _journaliser(journal, mandat, "mesure_avant", technique, index_test, session)
     avant = cible.mesurer(sonde, session)
