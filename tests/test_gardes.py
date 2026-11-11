@@ -72,9 +72,9 @@ class TestGarde(unittest.TestCase):
             self.assertEqual(tailles.verifier(dossier), [])
 
     def test_motif_exclu(self):
-        self.assertTrue(tailles.exclu("docs/spec/a.md", ["docs/spec/**"]))
+        self.assertTrue(tailles.exclu("docs/fr/a.md", ["docs/fr/**"]))
         self.assertTrue(tailles.exclu(".github/workflows/x.yml", [".github/**"]))
-        self.assertFalse(tailles.exclu("src/piege/types.py", ["docs/spec/**"]))
+        self.assertFalse(tailles.exclu("src/piege/types.py", ["docs/fr/**"]))
 
 
 class TestDepotConforme(unittest.TestCase):

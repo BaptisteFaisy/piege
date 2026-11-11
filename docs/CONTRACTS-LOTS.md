@@ -40,7 +40,7 @@ already on `main`.
 Shared, append-only files (a lot may **add** a row, never rewrite another
 lot's row): `docs/TRACEABILITY.md`.
 
-Nobody touches: `docs/spec/cahier-des-charges.fr.md` (verbatim input),
+Nobody touches: `docs/fr/CAHIER-DES-CHARGES.md` (verbatim input),
 `.github/workflows/pr-auto-merge.yml`, `.github/fireworks/` (proven pipeline,
 owned by lot 0 infra).
 
