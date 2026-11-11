@@ -23,7 +23,7 @@ already on `main`.
 | **2** | `catalogue/`, `src/piege/catalogue/`, `tests/test_catalogue*.py`, `tests/test_chargeur_yaml.py` | 0 |
 | **3** | `src/piege/moteur/`, `src/piege/fournisseurs/`, `src/piege/cli.py`, `tests/test_moteur*.py`, `tests/test_fournisseurs*.py`, `tests/test_reproductibilite.py`, `tests/test_cli.py` | 0, 2 |
 | **4** | `src/piege/agents/attaquant/`, `tests/test_attaquant*.py` | 3 |
-| **5** | `src/piege/agents/juge/`, `tests/test_juge*.py` | 3 |
+| **5** | `src/piege/agents/juge/`, `tests/test_juge*.py` (+ ajout de l'enregistrement `Verdict` à `src/piege/types.py`, autorisé par le lot 0) | 3 |
 | **6** | `src/piege/severite_tableaux.py` (exploitability table for the 60 techniques, cross-checked against `severite.exploitabilite`), `tests/test_severite.py` (exhaustive), `tests/test_severite_tableaux.py` | 0, 2 |
 | **7** | `src/piege/familles/empoisonnement/`, `tests/test_famille_f*.py` | 1, 3 |
 | **8** | `src/piege/familles/faux_refus/`, `tests/test_famille_g*.py` | 1, 3 |
