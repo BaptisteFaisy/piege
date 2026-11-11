@@ -111,8 +111,13 @@ class CibleLocaleDemo:
         return "%s/%s" % (index_id, document.nom)
 
     def _index_test_id(self, session: str) -> str:
-        """Identifiant de l'index de test d'une session."""
-        return "idx-test-%s" % (session or "defaut")
+        """Clé d'index de test d'une campagne (le session passé vaut directement).
+
+        Le préfixe `idx-test-` est posé par `creer_index_test` (famille F) : la
+        cible utilise la chaîne fournie telle quelle, afin que dépôt, mesure et
+        destruction portent exactement la même clé.
+        """
+        return session or "defaut"
 
     def reindexer(self, session: str) -> None:
         """Réindexe : les documents déposés **persistent** (technique F6)."""
