@@ -10,7 +10,8 @@ règle violée. Une erreur de domaine n'est jamais masquée par une
 from __future__ import annotations
 
 __all__ = [
-    "ErreurPiege", "MandatInvalide", "MandatExpire", "HorsPerimetre",
+    "ErreurPiege", "Introuvable", "RoleInsuffisant", "MandatInvalide",
+    "MandatExpire", "HorsPerimetre",
     "ProductionInterdite", "BudgetEpuise", "ArretUrgence",
     "CorpusLegitimeAbsent", "AutorisationHumaineAbsente", "ValeurHorsPlage",
     "TechniqueInconnue", "TenantInconnu", "FournisseurIndisponible",
@@ -35,6 +36,20 @@ class ErreurPiege(Exception):
         """Corps d'erreur API (contrat gelé)."""
         return {"erreur": {"code": self.code, "message": self.message,
                            "regle": self.details.get("regle", "")}}
+
+
+class Introuvable(ErreurPiege):
+    """Ressource absente du tenant courant (n'expose pas les autres tenants)."""
+
+    code = "introuvable"
+    statut_http = 404
+
+
+class RoleInsuffisant(ErreurPiege):
+    """Le rôle porté par le jeton n'est pas habilité pour cette action."""
+
+    code = "role_insuffisant"
+    statut_http = 403
 
 
 class MandatInvalide(ErreurPiege):
@@ -123,6 +138,8 @@ class FournisseurIndisponible(ErreurPiege):
 
 CODE_HTTP = {
     "erreur_piege": 400,
+    "introuvable": 404,
+    "role_insuffisant": 403,
     "mandat_invalide": 403,
     "mandat_expire": 403,
     "hors_perimetre": 403,

@@ -100,10 +100,33 @@ class TestCommandesIndisponibles(unittest.TestCase):
             code, _, _ = lancer(["catalogue", dossier, "--resume"])
             self.assertIn(code, (CODE_SUCCES, CODE_REFUS))
 
-    def test_rapport_sans_lot_12(self):
-        code, _, erreur = lancer(["rapport", "--derniere"])
+    def test_rapport_sans_campagne(self):
+        """Sans campagne en base, la CLI le dit explicitement (jamais de rapport vide)."""
+        code, _, erreur = lancer(["rapport", "--derniere", "--donnees",
+                                  "/tmp/piege-donnees-inexistantes"])
         self.assertEqual(code, CODE_REFUS)
-        self.assertIn("ABSENT", erreur)
+        self.assertIn("aucune campagne", erreur)
+
+    def test_rapport_bilingue_apres_campagne(self):
+        """Une campagne stockée produit bien un rapport FR et EN."""
+        import json
+        import os
+        import tempfile
+
+        from piege.stockage import creer_entrepot
+        from doubles import campagne as fabrique_campagne
+
+        with tempfile.TemporaryDirectory() as dossier:
+            entrepot = creer_entrepot({"type": "local", "dossier": dossier})
+            campagne = fabrique_campagne()
+            entrepot.ecrire("campagnes", campagne.vers_dict())
+            code, sortie, _ = lancer(["rapport", "--campagne", campagne.id,
+                                      "--tenant", campagne.tenant_id,
+                                      "--donnees", dossier, "--langues", "fr,en"])
+            self.assertEqual(code, CODE_SUCCES)
+            self.assertIn("Rapport de campagne", sortie)
+            self.assertIn("Campaign report", sortie)
+            del json, os
 
 
 class TestSortieStandard(unittest.TestCase):
