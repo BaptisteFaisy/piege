@@ -1,0 +1,230 @@
+"""Tests des fournisseurs de modèle : local déterministe, InferHub injecté."""
+
+from __future__ import annotations
+
+import json
+import os
+import unittest
+
+from piege.erreurs import FournisseurIndisponible
+from piege.fournisseurs import creer_fournisseur
+from piege.fournisseurs.base import NOMS, ReponseModele
+from piege.fournisseurs.inferhub import (MODELE_DEFAUT, URL_DEFAUT,
+                                         extraire_json)
+from piege.fournisseurs.local import (FournisseurLocal, estimer_jetons,
+                                       extraire_transcription)
+
+
+class TestFabrique(unittest.TestCase):
+    """La fabrique choisit l'implémentation, et refuse l'inconnu."""
+
+    def test_noms_publies(self):
+        self.assertEqual(NOMS, ("local", "inferhub", "bedrock"))
+
+    def test_local_par_defaut(self):
+        self.assertIsInstance(creer_fournisseur(), FournisseurLocal)
+
+    def test_nom_explicite(self):
+        self.assertEqual(creer_fournisseur("local").nom, "local")
+
+    def test_inconnu(self):
+        with self.assertRaises(ValueError):
+            creer_fournisseur("openai")
+
+
+class TestFournisseurLocal(unittest.TestCase):
+    """Le fournisseur local est déterministe et ne fait aucun réseau."""
+
+    def test_completion_deterministe(self):
+        fournisseur = FournisseurLocal()
+        messages = [{"role": "user", "content": "bonjour"}]
+        premier = fournisseur.completer(messages, graine=7)
+        second = fournisseur.completer(messages, graine=7)
+        self.assertEqual(premier.texte, second.texte)
+        self.assertIsInstance(premier, ReponseModele)
+
+    def test_jetons_declares(self):
+        fournisseur = FournisseurLocal()
+        reponse = fournisseur.completer([{"role": "user", "content": "x" * 400}],
+                                         graine=1)
+        self.assertGreater(reponse.jetons_entree, 0)
+        self.assertGreater(reponse.jetons_sortie, 0)
+
+    def test_graine_change_reponse(self):
+        fournisseur = FournisseurLocal()
+        messages = [{"role": "user", "content": "bonjour"}]
+        reponses = {fournisseur.completer(messages, graine=g).texte
+                    for g in range(12)}
+        self.assertGreater(len(reponses), 1)
+
+    def test_classificateur_injecte(self):
+        def classer(transcription):
+            return {"verdict": "echoue", "impact": 1, "citation": "",
+                    "confiance": 0.5, "motif": "test", "garde_fou_declenche": True}
+
+        fournisseur = FournisseurLocal(classificateur=classer)
+        sortie = fournisseur.sortie_structuree([{"role": "user", "content": "x"}],
+                                                {"type": "object"}, 1)
+        self.assertEqual(sortie["verdict"], "echoue")
+        self.assertTrue(sortie["garde_fou_declenche"])
+
+    def test_enum_normalisees(self):
+        def classer(transcription):
+            from piege.types import VerdictValeur
+
+            return {"verdict": VerdictValeur.REUSSI, "impact": 4,
+                    "citation": "x", "confiance": 0.9, "motif": "m",
+                    "garde_fou_declenche": False}
+
+        sortie = FournisseurLocal(classificateur=classer).sortie_structuree(
+            [{"role": "user", "content": "x"}], {"type": "object"}, 1)
+        self.assertEqual(sortie["verdict"], "reussi")
+
+    def test_schema_invalide(self):
+        with self.assertRaises(FournisseurIndisponible):
+            FournisseurLocal().sortie_structuree([{"role": "user", "content": "x"}],
+                                                  "pas-un-schema", 1)
+
+    def test_estimation_jetons(self):
+        self.assertEqual(estimer_jetons(""), 1)
+        self.assertEqual(estimer_jetons("abcd" * 4), 4)
+
+    def test_extraction_transcription(self):
+        messages = [{"role": "user",
+                     "content": "TRANSCRIPTION\n---\nla réponse\n---\n"}]
+        self.assertEqual(extraire_transcription(messages).strip(), "la réponse")
+
+    def test_extraction_absente(self):
+        self.assertEqual(extraire_transcription([]), "")
+
+
+class TestInferhub(unittest.TestCase):
+    """Le client HTTP est exercé par un transport injecté : aucun réseau."""
+
+    def fournisseur(self, reponse=None, cle="cle-test"):
+        from piege.fournisseurs.inferhub import FournisseurInferhub
+
+        appels = []
+
+        def transport(url, charge, cle_envoyee):
+            appels.append({"url": url, "charge": charge, "cle": cle_envoyee})
+            return reponse or {"choices": [{"message": {"content": "bonjour"}}],
+                               "usage": {"prompt_tokens": 42,
+                                         "completion_tokens": 7}}
+
+        fournisseur = FournisseurInferhub(cle=cle, transport=transport)
+        fournisseur.appels = appels
+        return fournisseur
+
+    def test_constantes(self):
+        self.assertEqual(URL_DEFAUT,
+                         "https://api.inferhub.dev/v1/chat/completions")
+        self.assertEqual(MODELE_DEFAUT, "ag/gemini-3.8-flash-high")
+
+    def test_completion(self):
+        fournisseur = self.fournisseur()
+        reponse = fournisseur.completer([{"role": "user", "content": "salut"}],
+                                         graine=1)
+        self.assertEqual(reponse.texte, "bonjour")
+        self.assertEqual(reponse.jetons_entree, 42)
+        self.assertEqual(reponse.jetons_sortie, 7)
+        self.assertEqual(fournisseur.appels[0]["charge"]["model"],
+                         MODELE_DEFAUT)
+        self.assertEqual(fournisseur.appels[0]["cle"], "cle-test")
+
+    def test_sortie_structuree(self):
+        fournisseur = self.fournisseur(reponse={
+            "choices": [{"message": {"content": '{"verdict": "reussi"}'}}]})
+        sortie = fournisseur.sortie_structuree([{"role": "user", "content": "x"}],
+                                                {"type": "object"}, 1)
+        self.assertEqual(sortie["verdict"], "reussi")
+        self.assertTrue(fournisseur.appels[0]["charge"]["response_format"])
+
+    def test_absence_de_cle(self):
+        from piege.fournisseurs.inferhub import FournisseurInferhub
+
+        fournisseur = FournisseurInferhub(cle="", transport=lambda *a: {})
+        with self.assertRaises(FournisseurIndisponible) as ctx:
+            fournisseur.completer([{"role": "user", "content": "x"}], 1)
+        self.assertEqual(ctx.exception.details["regle"], "fournisseur.inferhub.cle")
+
+    def test_reponse_illisible(self):
+        fournisseur = self.fournisseur(reponse={"unexpected": True})
+        with self.assertRaises(FournisseurIndisponible):
+            fournisseur.completer([{"role": "user", "content": "x"}], 1)
+
+    def test_erreur_transport(self):
+        from piege.fournisseurs.inferhub import FournisseurInferhub
+
+        def transport(url, charge, cle):
+            raise OSError("réseau injoignable")
+
+        fournisseur = FournisseurInferhub(cle="k", transport=transport)
+        with self.assertRaises(FournisseurIndisponible):
+            fournisseur.completer([{"role": "user", "content": "x"}], 1)
+
+    def test_extraire_json(self):
+        self.assertEqual(extraire_json('{"a": 1}'), {"a": 1})
+        self.assertEqual(extraire_json('```json\n{"a": 1}\n```'), {"a": 1})
+        self.assertEqual(extraire_json('Voici : {"a": 1} — fin'), {"a": 1})
+
+    def test_extraire_json_illisible(self):
+        with self.assertRaises(FournisseurIndisponible):
+            extraire_json("pas de json ici")
+        with self.assertRaises(FournisseurIndisponible):
+            extraire_json("")
+
+    def test_cle_jamais_journalisee(self):
+        """La clé n'apparaît dans aucune sortie de l'appel."""
+        fournisseur = self.fournisseur(cle="cle-super-secrete")
+        fournisseur.completer([{"role": "user", "content": "x"}], 1)
+        self.assertNotIn("cle-super-secrete",
+                         json.dumps(fournisseur.appels[0]["charge"]))
+
+
+class TestBedrock(unittest.TestCase):
+    """Sans boto3, le fournisseur Bedrock le dit clairement."""
+
+    def test_sans_client(self):
+        from piege.fournisseurs.bedrock import FournisseurBedrock
+
+        try:
+            import boto3                                    # noqa: F401,PLC0415
+        except ImportError:
+            pass
+        else:
+            self.skipTest("boto3 installé : le repli n'est pas exercé")
+        fournisseur = FournisseurBedrock()
+        with self.assertRaises(FournisseurIndisponible) as ctx:
+            fournisseur.client()
+        self.assertEqual(ctx.exception.details["regle"],
+                         "fournisseur.bedrock.client")
+
+    def test_avec_client_double(self):
+        from piege.fournisseurs.bedrock import FournisseurBedrock
+
+        class Client:
+            def converse(self, **charge):
+                return {"output": {"message": {"content": [
+                    {"text": '{"verdict": "reussi"}'}]}},
+                    "usage": {"inputTokens": 5, "outputTokens": 2}}
+
+        fournisseur = FournisseurBedrock(client=Client())
+        reponse = fournisseur.completer([{"role": "user", "content": "x"}], 1)
+        self.assertEqual(reponse.jetons_entree, 5)
+        sortie = fournisseur.sortie_structuree([{"role": "user", "content": "x"}],
+                                                {"type": "object"}, 1)
+        self.assertEqual(sortie["verdict"], "reussi")
+
+    def test_variables_d_environnement(self):
+        from piege.fournisseurs.bedrock import FournisseurBedrock
+
+        os.environ["PIEGE_MODELE"] = "amazon.nova-pro-v1:0"
+        try:
+            self.assertEqual(FournisseurBedrock().modele, "amazon.nova-pro-v1:0")
+        finally:
+            os.environ.pop("PIEGE_MODELE", None)
+
+
+if __name__ == "__main__":
+    unittest.main()
