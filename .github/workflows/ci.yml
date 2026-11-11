@@ -1,0 +1,104 @@
+name: CI
+
+# CI du projet Piège : contrôles rapides, bibliothèque standard uniquement,
+# verdict en quelques dizaines de secondes (règle user 2026-10-24 : 5 min max).
+# Le check publié s'appelle `ci` (nom du job) : il est exigé par le ruleset de
+# `main` et par la file Mergify, comme `ci-budget` et `couche0`.
+#
+# Quatre familles de contrôles, dans cet ordre (le plus cheap d'abord) :
+#   1. documents lisibles et non vides ;
+#   2. les gardes de la CI se testent elles-mêmes (couche0, agents) ;
+#   3. les gardes du projet : taille des fichiers/fonctions, catalogue ;
+#   4. les tests du projet (pytest s'il est installé, sinon lanceur stdlib).
+on:
+  pull_request:
+  # File de merge : même contrôle sur le commit temporaire du groupe.
+  merge_group:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: src
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  ci:
+    name: ci
+    runs-on: [self-hosted, linux, x64, piege-worker]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          clean: false
+
+      # Runners self-hosted persistants : un sous-dossier parasite d'un run
+      # précédent peut survivre et fausser les contrôles.
+      - name: Nettoyage du workspace
+        shell: bash
+        run: git clean -ffdx
+
+      - name: Sanity docs (UTF-8, non vides)
+        run: |
+          python3 - <<'EOF'
+          import pathlib
+          racines = [pathlib.Path(".")]
+          exts = {".md", ".mdx", ".txt"}
+          vides, illisibles, total = [], [], 0
+          for racine in racines:
+              for f in sorted(racine.rglob("*")):
+                  if ".git/" in f.as_posix() or f.suffix.lower() not in exts:
+                      continue
+                  total += 1
+                  try:
+                      contenu = f.read_text(encoding="utf-8")
+                  except (OSError, UnicodeError):
+                      illisibles.append(f.as_posix())
+                      continue
+                  if not contenu.strip():
+                      vides.append(f.as_posix())
+          print("%d doc(s) contrôlé(s)" % total)
+          for f in illisibles:
+              print("::error::illisible en UTF-8 : %s" % f)
+          for f in vides:
+              print("::error::document vide : %s" % f)
+          raise SystemExit(1 if (illisibles or vides) else 0)
+          EOF
+
+      # Les gardes de la CI se testent elles-mêmes : couche0 + agents
+      # (conflit Hermes/InferHub, périmètre, test) — stdlib, aucun réseau.
+      - name: Tests des gardes CI (couche0, agents)
+        run: |
+          python3 .github/couche0/test_check_couche0.py
+          python3 .github/fireworks/test_conflict_agent.py
+          python3 .github/fireworks/test_test_agent.py
+          python3 .github/fireworks/test_scope_agent.py
+          python3 .github/fireworks/test_union_journal.py
+          python3 .github/fireworks/test_quota.py
+
+      - name: Garde de taille (fichiers < 500 lignes, fonctions < 50)
+        run: python3 scripts/gardes/tailles.py
+
+      - name: Validation du catalogue (60 techniques)
+        run: |
+          if [ -f src/piege/catalogue/valideur.py ] && [ -d catalogue ]; then
+            python3 -m piege.catalogue.valideur catalogue --resume
+          else
+            echo "catalogue ou valideur absent (lot 2 non mergé) — contrôle sauté"
+          fi
+
+      - name: Tests du projet
+        run: |
+          if python3 -m pytest --version >/dev/null 2>&1; then
+            python3 -m pytest -q
+          else
+            echo "pytest absent — lanceur stdlib"
+            python3 scripts/lance_tests.py
+          fi

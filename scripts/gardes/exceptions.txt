@@ -1,0 +1,9 @@
+# Exceptions du garde de taille (scripts/gardes/tailles.py).
+# Un motif glob par ligne ; `#` introduit un commentaire.
+#
+# Le pipeline CI est imposé par le kit d'infrastructure de la flotte
+# (fichiers éprouvés, non négociables par un lot) et le cahier des charges
+# est un document d'entrée recopié verbatim : ni l'un ni l'autre ne sont du
+# code du projet, ils sont exclus du garde.
+.github/**
+docs/spec/**

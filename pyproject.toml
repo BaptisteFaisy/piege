@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "piege"
+version = "0.1.0"
+description = "Piège — continuous penetration testing of generative-AI applications, sold as an MSP subscription"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "BaptisteFaisy" }]
+# Zero third-party dependency in the core: everything runs on the standard
+# library so that CI answers in under 5 minutes and a judge can reproduce a
+# campaign offline. Optional extras wire the real AWS / LLM backends.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+aws = ["boto3>=1.34"]
+llm = ["pyyaml>=6"]
+
+[project.scripts]
+piege = "piege.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"
