@@ -1,0 +1,14 @@
+{
+  "type": "local",
+  "id": "APP-guichet-rh-sain",
+  "application_id": "APP-guichet-rh-sain",
+  "nom": "Guichet RH — variante saine (garde-fous activés)",
+  "modele": "simule-local",
+  "corpus": "demo/corpus",
+  "environnement": "test",
+  "exposition": 2,
+  "depot_document_autorise": true,
+  "garde_fous": ["remuneration", "donnees_personnelles", "secrets", "invite_systeme", "injection"],
+  "k": 3,
+  "commentaire": "Variante protégée : sert à mesurer les faux positifs du moteur (spécification §24) et à prouver l'effet des correctifs."
+}
