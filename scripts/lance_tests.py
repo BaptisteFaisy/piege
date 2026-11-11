@@ -21,8 +21,8 @@ SOURCE = os.path.join(RACINE, "src")
 
 
 def preparer_pythonpath() -> None:
-    """Place `src/` et la racine en tête de PYTHONPATH."""
-    for chemin in (SOURCE, RACINE):
+    """Place `src/`, la racine et `tests/` en tête de PYTHONPATH."""
+    for chemin in (SOURCE, RACINE, os.path.join(RACINE, "tests")):
         if chemin not in sys.path:
             sys.path.insert(0, chemin)
 
