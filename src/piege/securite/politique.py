@@ -74,7 +74,13 @@ def _regle_mandat(outil, faits):
 
 
 def _regle_perimetre(outil, faits):
-    """Cible, technique et environnement couverts par le mandat."""
+    """Cible, technique et environnement couverts par le mandat.
+
+    Ne s'applique qu'aux outils visant la cible : l'annexe B écrit la politique
+    outil par outil, et l'autorisation d'un correctif ne porte pas de technique.
+    """
+    if outil not in OUTILS_CIBLE:
+        return None
     if faits.get("cible_id") != faits.get("mandat_application_id"):
         return refus("perimetre.application", "hors_perimetre",
                      "cible %s hors du périmètre du mandat" % faits.get("cible_id"),
@@ -97,6 +103,8 @@ def _regle_perimetre(outil, faits):
 
 def _regle_production(outil, faits):
     """Production : interdite par le catalogue avant de l'être par le mandat."""
+    if outil not in OUTILS_CIBLE:
+        return None
     if faits.get("cible_environnement") != Environnement.PROD.value:
         return None
     if faits.get("technique_production") == ProductionAutorisee.JAMAIS.value:
@@ -112,6 +120,8 @@ def _regle_production(outil, faits):
 
 def _regle_budget(outil, faits):
     """Budget d'appels et de jetons : arrêt propre au seuil (ENF-02)."""
+    if outil not in OUTILS_CIBLE:
+        return None
     appels = faits.get("campagne_appels_restants")
     if appels is not None and appels <= 0:
         return refus("budget.appels", "budget_epuise",
