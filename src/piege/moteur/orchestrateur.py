@@ -149,21 +149,11 @@ def _execution_vide(contexte: Contexte, technique: Technique, statut: str,
 
 
 def _attaquer_et_juger(contexte: Contexte, technique: Technique) -> Execution:
-    """Attaque bornée puis jugement ; le budget est consommé par l'attaquant."""
-    from piege.moteur.replis import attaquant_minimal
-
-    if contexte.attaquant is attaquant_minimal:
-        execution = contexte.attaquant(
-            technique, contexte.cible, contexte.mandat, contexte.campagne,
-            contexte.fournisseur, graine_technique(contexte.config.graine,
-                                                   technique.id),
-            contexte.journal, contexte.budget)
-    else:
-        execution = contexte.attaquant(
-            technique, contexte.cible, contexte.mandat, contexte.campagne,
-            contexte.fournisseur, graine_technique(contexte.config.graine,
-                                                   technique.id),
-            contexte.journal)
+    """Attaque bornée puis jugement ; le budget et l'arrêt sont transmis."""
+    execution = contexte.attaquant(
+        technique, contexte.cible, contexte.mandat, contexte.campagne,
+        contexte.fournisseur, graine_technique(contexte.config.graine, technique.id),
+        contexte.journal, budget=contexte.budget, arret=contexte.arret)
     _juger(contexte, technique, execution)
     return _enregistrer(contexte, execution)
 
