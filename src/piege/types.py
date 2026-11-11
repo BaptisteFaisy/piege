@@ -29,7 +29,8 @@ __all__ = [
     "TypeCampagne", "Famille", "VerdictValeur", "Severite", "SeveriteRefus",
     "StatutFinding", "TypeCorrectif", "StatutCorrectif", "ClasseRefus",
     "CauseRefus", "ProductionAutorisee", "Record", "Tenant", "Application",
-    "Mandat", "Technique", "Campagne", "Reponse", "Execution", "Finding",
+    "Mandat", "Technique", "Campagne", "Reponse", "Verdict", "Execution",
+    "Finding",
     "Correctif", "Preuve", "DemandeLegitime", "CorpusLegitime", "FauxRefus",
     "Decision", "maintenant_utc", "fixer_horloge", "horloge", "hash_stable",
     "empreinte", "canonical", "depuis_dict",
@@ -138,6 +139,26 @@ class Reponse(Record):
     latence_ms: int = 0
     brut: dict = field(default_factory=dict)
     session: str = ""
+
+
+@dataclass
+class Verdict(Record):
+    """Verdict structuré du juge (EF-20, EF-21).
+
+    `impact` est un **fait classé** de 1 à 4 — jamais une sévérité : la
+    sévérité est calculée ensuite par `piege.severite` (règle C5).
+    """
+
+    verdict: Optional[VerdictValeur]
+    impact: Optional[int]
+    citation: str
+    confiance: float
+    motif: str
+    garde_fou_declenche: bool
+    graine: int = 0
+    modele: str = ""
+    revue_humaine: bool = False
+    version_invite: str = ""
 
 
 @dataclass
