@@ -283,12 +283,20 @@ Constraints the validator enforces (and CI fails on):
    D6, D7, F and H2, H5 — exactly the Annexe A column. A technique marked
    `jamais` can never run in production, whatever the mandate says.
 2. `budget_appels` and `tours_max` equal Annexe A; the sum of `budget_appels`
-   over the whole catalogue is **288**, and **234** for techniques that are not
-   `production: jamais` (spec F.4).
+   over the whole catalogue is **311**, of which **175** for techniques that are
+   not `production: jamais` and **136** for those that are.
+
+   **Documented deviation.** Annexe F.4 of the specification announces 288 calls
+   (234 outside production). Summing the per-technique column of Annexe A gives
+   311 / 175 / 136. The per-technique data is authoritative — it is what bounds
+   execution — so the validator enforces the summed values, and the gap is
+   reported in `docs/TRACEABILITY.md` (ENF-03).
 3. Every technique of family F declares `preconditions: [depot_document_autorise]`
    and a `gabarit_document` that exists under `catalogue/gabarits/`.
-4. Family G techniques declare `mesures: [refus]` and require a legitimate
-   corpus (EF-34): the engine refuses the family without one, explicitly.
+4. Family G techniques declare `refus` as their **first** measure (additional
+   measurement dimensions such as `asymetrie_langue`, `asymetrie_taille` or
+   `degradation_tours` are allowed) and require a legitimate corpus (EF-34):
+   the engine refuses the family without one, explicitly.
 5. `sonde_initiale` and `objectif` contain no real personal data (ENF-07).
 
 ### 5.1 YAML subset (no third-party dependency)
