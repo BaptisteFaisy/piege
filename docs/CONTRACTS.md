@@ -3,7 +3,7 @@
 This document is **frozen**: a lot may not change a contract unilaterally. Any
 change is a pull request on `docs/CONTRACTS*.md` alone, flagged `urgent`, and
 every dependent lot is rebased afterwards. Identifiers `EF-*`, `ENF-*`, `KPI-*`
-refer to `docs/spec/cahier-des-charges.fr.md`.
+refer to `docs/fr/CAHIER-DES-CHARGES.md`.
 
 Companion documents: `CONTRACTS-INTERFACES.md` (module APIs) and
 `CONTRACTS-LOTS.md` (file ownership, pull-request discipline).

@@ -8,7 +8,7 @@ exécuté par la CI (check `ci`) et par `make gardes`.
 Périmètre : tout le dépôt sauf les chemins listés dans
 `scripts/gardes/exceptions.txt` (motifs glob, un par ligne, `#` = commentaire).
 Le pipeline CI imposé (`.github/`) et le cahier des charges verbatim
-(`docs/spec/`) en font partie : ils ne sont pas du code du projet.
+(`docs/fr/`) en font partie : ils ne sont pas du code du projet.
 
 Usage : `python3 scripts/gardes/tailles.py [--racine .] [--json]`
 Sortie : 0 si conforme, 1 sinon (liste des dépassements sur stdout).
