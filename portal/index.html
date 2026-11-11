@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Piège — continuous AI-application penetration testing</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Piège <span class="sous-titre">continuous pentest for generative-AI applications</span></h1>
+    <div class="jeton">
+      <label for="tenant">Tenant token</label>
+      <select id="tenant">
+        <option value="jeton:TEN-acme:commanditaire:analyste">TEN-acme — sponsor / analyst</option>
+        <option value="jeton:TEN-bolt:commanditaire">TEN-bolt — sponsor</option>
+        <option value="jeton:TEN-acme:commercial">TEN-acme — account manager (read-only)</option>
+      </select>
+      <span id="sante" class="pastille" title="service health">…</span>
+    </div>
+  </header>
+
+  <nav>
+    <button data-onglet="campagne" class="actif">1 · Campaign</button>
+    <button data-onglet="decouvertes">2 · Findings</button>
+    <button data-onglet="faux-refus">3 · False refusals</button>
+    <button data-onglet="perimetre">4 · Policy</button>
+    <button data-onglet="rapport">5 · Report</button>
+    <button data-onglet="tendances">6 · Trend &amp; cost</button>
+  </nav>
+
+  <main>
+    <section id="onglet-campagne" class="onglet actif">
+      <h2>Declare, mandate, run</h2>
+      <div class="grille-2">
+        <form id="form-application" class="carte">
+          <h3>1. Target application</h3>
+          <label>Id <input name="id" value="APP-guichet"></label>
+          <label>Name <input name="nom" value="Guichet RH — demo target, intentional vulnerabilities"></label>
+          <label>Type
+            <select name="type">
+              <option value="rag">rag</option><option value="agent">agent</option>
+              <option value="chatbot">chatbot</option><option value="documentaire">documentaire</option>
+            </select>
+          </label>
+          <label>Environment
+            <select name="environnement"><option value="test">test</option><option value="preprod">preprod</option></select>
+          </label>
+          <label>Exposure (1 restricted · 2 employees · 3 public)
+            <input name="exposition" type="number" min="1" max="3" value="2">
+          </label>
+          <label class="case"><input name="depot_document_autorise" type="checkbox" checked> document upload allowed (family F)</label>
+          <button type="submit">Declare</button>
+        </form>
+
+        <form id="form-mandat" class="carte">
+          <h3>2. Signed mandate</h3>
+          <label>Application id <input name="application_id" value="APP-guichet"></label>
+          <label>Techniques (comma separated, empty = all) <input name="perimetre" value="A1,C1,F3,G1"></label>
+          <label>Window from <input name="fenetre_debut" value="2026-11-01T00:00:00Z"></label>
+          <label>Window to <input name="fenetre_fin" value="2027-12-01T00:00:00Z"></label>
+          <label>Call budget <input name="budget_appels" type="number" value="288"></label>
+          <label>Token budget <input name="budget_jetons" type="number" value="2000000"></label>
+          <label class="case"><input name="production_autorisee" type="checkbox"> production authorised</label>
+          <label>Emergency contact <input name="contact_urgence" value="security@customer.example"></label>
+          <button type="submit">Sign mandate</button>
+        </form>
+      </div>
+
+      <div class="carte">
+        <h3>3. Run a campaign</h3>
+        <form id="form-campagne">
+          <label>Mandate <select name="mandat_id" id="select-mandat"></select></label>
+          <label>Seed <input name="graine" type="number" value="20261124"></label>
+          <label>Parallelism <input name="parallelisme" type="number" min="1" max="8" value="4"></label>
+          <button type="submit">Launch</button>
+          <button type="button" id="btn-suspendre" class="secondaire">Emergency stop</button>
+          <button type="button" id="btn-reprendre" class="secondaire">Resume</button>
+        </form>
+        <div id="progression" class="progression"></div>
+        <pre id="journal-campagne" class="journal"></pre>
+      </div>
+    </section>
+
+    <section id="onglet-decouvertes" class="onglet">
+      <h2>What leaks</h2>
+      <div class="bandeau">
+        <div><span id="kpi-fuites">–</span><small>findings</small></div>
+        <div><span id="kpi-critiques">–</span><small>critical open</small></div>
+        <div><span id="kpi-taux">–</span><small>bypass rate</small></div>
+        <div><span id="kpi-cout">–</span><small>measured cost</small></div>
+      </div>
+      <div id="liste-findings"></div>
+    </section>
+
+    <section id="onglet-faux-refus" class="onglet">
+      <h2>What is broken by excess caution</h2>
+      <p class="note">Family G needs a legitimate-request corpus from the customer.
+        Without it the engine refuses to publish an empty figure (EF-34).</p>
+      <div id="resume-refus"></div>
+      <div id="liste-refus"></div>
+    </section>
+
+    <section id="onglet-perimetre" class="onglet">
+      <h2>Policy: the gateway decides, not the prompt</h2>
+      <p class="note">Try to reach a target outside the mandate: the request is refused by
+        AgentCore Policy before any tool runs, and the refusal is journalled. This is the
+        1:45 moment of the demo.</p>
+      <form id="form-hors-perimetre" class="carte">
+        <label>Application id outside the mandate <input name="application_id" value="APP-hors-perimetre"></label>
+        <label>Technique <input name="technique" value="A1"></label>
+        <button type="submit">Attempt out-of-scope probe</button>
+      </form>
+      <pre id="resultat-perimetre" class="journal"></pre>
+    </section>
+
+    <section id="onglet-rapport" class="onglet">
+      <h2>Customer report and attestation</h2>
+      <div class="carte">
+        <label>Campaign <select id="select-rapport"></select></label>
+        <label>Language
+          <select id="select-langue"><option value="fr">Français</option><option value="en">English</option></select>
+        </label>
+        <button type="button" id="btn-rapport">Generate report</button>
+        <button type="button" id="btn-attestation" class="secondaire">Generate attestation</button>
+      </div>
+      <article id="sortie-rapport" class="rapport"></article>
+    </section>
+
+    <section id="onglet-tendances" class="onglet">
+      <h2>Trend and measured cost</h2>
+      <div class="carte">
+        <label>Application <input id="tendance-application" value="APP-guichet"></label>
+        <button type="button" id="btn-tendances">Load trend</button>
+        <button type="button" id="btn-budget" class="secondaire">Load budget</button>
+      </div>
+      <div id="sortie-tendances"></div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Demo dataset is 100% synthetic and watermarked. No real personal data.</span>
+    <span id="horloge"></span>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

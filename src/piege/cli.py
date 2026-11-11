@@ -46,6 +46,8 @@ def construire_analyseur() -> argparse.ArgumentParser:
     rapport.add_argument("--derniere", action="store_true")
     rapport.add_argument("--campagne", default="")
     rapport.add_argument("--langues", default="fr")
+    rapport.add_argument("--donnees", default="donnees-locales")
+    rapport.add_argument("--tenant", default="")
 
     validation = sous.add_parser("validation", help="périmètre d'un mandat")
     validation.add_argument("--mandat", required=True)
@@ -124,13 +126,36 @@ def _commande_catalogue(args) -> int:
 
 
 def _commande_rapport(args) -> int:
-    """Génère le rapport d'une campagne (lot 12)."""
+    """Génère le rapport d'une campagne depuis l'entrepôt local (lot 12)."""
     from piege.rapport import rapport_depuis_entrepot
+    from piege.stockage import creer_entrepot
 
+    entrepot = creer_entrepot({"type": "local", "dossier": args.donnees})
+    campagne_id, tenant = _resoudre_campagne(entrepot, args)
     for langue in [l for l in args.langues.split(",") if l]:
-        print(rapport_depuis_entrepot(campagne_id=args.campagne,
-                                      derniere=args.derniere, langue=langue))
+        print(rapport_depuis_entrepot(entrepot, campagne_id, tenant, langue))
     return CODE_SUCCES
+
+
+def _resoudre_campagne(entrepot, args) -> tuple:
+    """Retrouve (campagne, tenant) : explicites, ou dernière campagne du tenant."""
+    campagnes = entrepot.lister("campagnes", tenant_id=args.tenant)
+    if args.campagne:
+        tenant = args.tenant or _tenant_de(entrepot, args.campagne)
+        return args.campagne, tenant
+    if not campagnes:
+        raise ErreurPiege("aucune campagne en base : préciser --campagne",
+                          code="introuvable", details={"regle": "cli.rapport"})
+    derniere = sorted(campagnes, key=lambda c: c.get("debutee_le", ""))[-1]
+    return derniere["id"], derniere.get("tenant_id", "")
+
+
+def _tenant_de(entrepot, campagne_id: str) -> str:
+    """Tenant d'une campagne, lu sans filtre (usage local administrateur)."""
+    for brut in entrepot.lister("campagnes"):
+        if brut.get("id") == campagne_id:
+            return str(brut.get("tenant_id", ""))
+    return ""
 
 
 def _commande_validation(args) -> int:
