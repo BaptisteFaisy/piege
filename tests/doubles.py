@@ -48,7 +48,12 @@ def technique(**remplacements) -> Technique:
 
 
 def mandat(**remplacements) -> Mandat:
-    """Mandat valide couvrant A1 et F3 sur l'application de démonstration."""
+    """Mandat **signé** couvrant A1 et F3 sur l'application de démonstration.
+
+    La signature est réelle (`piege.securite.mandats.signer`) : un double dont
+    la signature serait factice serait rejeté par la validation, ce qui est
+    exactement le comportement attendu en production.
+    """
     valeurs = dict(
         id="MAN-2026-0001", tenant_id=TENANT, application_id=APPLICATION,
         perimetre_techniques=["A1", "F3"],
@@ -56,9 +61,14 @@ def mandat(**remplacements) -> Mandat:
         fenetre_debut="2026-11-01T00:00:00Z", fenetre_fin="2026-12-01T00:00:00Z",
         budget_appels=288, budget_jetons=2_000_000, production_autorisee=False,
         contact_urgence="securite@client.example", signe_le=INSTANT,
-        signature="sha256:double", statut=StatutMandat.VALIDE)
+        signature="", statut=StatutMandat.VALIDE)
     valeurs.update(remplacements)
-    return Mandat(**valeurs)
+    construit = Mandat(**valeurs)
+    if construit.statut is StatutMandat.VALIDE and not construit.signature:
+        from piege.securite import mandats as mandats_module
+
+        return mandats_module.signer(construit)
+    return construit
 
 
 def campagne(**remplacements) -> Campagne:

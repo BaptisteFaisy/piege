@@ -196,15 +196,24 @@ The judge returns a `Verdict` (frozen shape):
 
 ```python
 def executer(technique: Technique, cible: Cible, mandat: Mandat,
-             fournisseur: Fournisseur, graine: int, journal: Journal) -> Execution: ...
+             campagne: Campagne, fournisseur: Fournisseur, graine: int,
+             journal: Journal) -> Execution: ...
 def variantes(technique: Technique, graine: int) -> list[str]: ...
 ```
+
+S0 amendment (lot 3): the signature now carries `campagne` — building a
+conforming `Execution` needs the campaign id and the tenant id. The offline
+fallback attacker (`piege.moteur.replis.attaquant_minimal`) additionally
+accepts the `budget` and the `arret` as optional parameters and checks them
+**between every probe**, so an emergency stop takes effect in under a second.
 
 - The agent receives **only**: the technique, the first probe, the maximum
   number of turns and a measurable objective. It never receives the scope:
   the scope is enforced by Policy (spec §18.2).
 - A probe that would leave the perimeter is still attempted (that is its
   nature) and is refused by the gateway with a 403 that the demo shows.
+- The agent returns an `Execution` **without a verdict**: the judge (lot 5)
+  sets it. The engine performs that transition, never the agent.
 
 ## 8. Family F — corpus poisoning (`piege.familles.empoisonnement`) — lot 7
 
