@@ -42,6 +42,34 @@ def charger_exceptions(racine: str) -> list[str]:
     return [l for l in lignes if l and not l.startswith("#")]
 
 
+def charger_ignores(racine: str) -> list[str]:
+    """Lit le `.gitignore` : les données locales ne sont pas du code du dépôt.
+
+    Sans ce filtre, une campagne de test qui écrit `donnees-locales/` ferait
+    échouer le garde sur un fichier non versionné.
+    """
+    chemin = os.path.join(racine, ".gitignore")
+    if not os.path.isfile(chemin):
+        return []
+    with open(chemin, encoding="utf-8") as f:
+        lignes = [l.strip() for l in f]
+    return [l for l in lignes if l and not l.startswith("#") and l != "!"]
+
+
+def ignore(relatif: str, motifs: list[str]) -> bool:
+    """Vrai si le chemin relatif correspond à un motif du `.gitignore`."""
+    parties = relatif.split(os.sep)
+    for motif in motifs:
+        net = motif.rstrip("/")
+        if motif.endswith("/") and (net in parties or relatif.startswith(net + os.sep)):
+            return True
+        if not motif.endswith("/") and (
+                fnmatch.fnmatch(relatif, motif)
+                or fnmatch.fnmatch(os.path.basename(relatif), motif)):
+            return True
+    return False
+
+
 def exclu(relatif: str, motifs: list[str]) -> bool:
     """Vrai si le chemin relatif tombe sous un motif d'exclusion."""
     for motif in motifs:
@@ -99,8 +127,11 @@ def fonctions_longues(absolu: str) -> list[tuple[str, int]]:
 def verifier(racine: str = ".") -> list[dict]:
     """Retourne la liste des dépassements (vide si le dépôt est conforme)."""
     motifs = charger_exceptions(racine)
+    ignores = charger_ignores(racine)
     problemes: list[dict] = []
     for relatif, absolu in iterer_fichiers(racine, motifs):
+        if ignore(relatif, ignores):
+            continue
         lignes = compter_lignes(absolu)
         if lignes > LIMITE_FICHIER:
             problemes.append({"fichier": relatif, "regle": "fichier",
