@@ -1,0 +1,104 @@
+# Piège — infrastructure reproductible (AWS CloudFormation).
+# Le cœur étant sans dépendance tierce, la Lambda embarque le package tel quel.
+# Région proposée : eu-west-3 (repli eu-central-1, cf. chapitre 31 point 1).
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Piège — pentest continu des applications d'IA (plan de contrôle MSP)"
+
+Parameters:
+  Environnement:
+    Type: String
+    Default: demo
+    AllowedValues: [demo, prod]
+  EtatDeStockage:
+    Type: String
+    Default: piege
+
+Resources:
+  BaseDeMandats:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${EtatDeStockage}-mandats"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: tenant_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: par-tenant
+          KeySchema:
+            - AttributeName: tenant_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  Preuves:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${EtatDeStockage}-preuves-${Environnement}"
+      VersioningConfiguration:
+        Status: Enabled
+
+  RoledApi:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: piege-api
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:DeleteItem
+                Resource: !GetAtt BaseDeMandats.Arn
+              - Effect: Allow
+                Action: [s3:PutObject, s3:GetObject]
+                Resource: !Sub "${Preuves.Arn}/*"
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:Converse
+                  - bedrock:ApplyGuardrail
+                Resource: "*"
+
+  FonctionApi:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${EtatDeStockage}-api"
+      Runtime: python3.13
+      Handler: piege.api.serveur.gestionnaire_lambda
+      Role: !GetAtt RoledApi.Arn
+      MemorySize: 512
+      Timeout: 60
+      Environment:
+        Variables:
+          PIEGE_DONNEES: /tmp/donnees
+          AWS_REGION: eu-west-3
+
+  ApiPublique:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub "${EtatDeStockage}-api"
+      ProtocolType: HTTP
+      Target: !GetAtt FonctionApi.Arn
+
+Outputs:
+  UrlApi:
+    Description: Adresse de l'API
+    Value: !GetAtt ApiPublique.ApiEndpoint
