@@ -1,7 +1,7 @@
 # TRACEABILITY — requirements ↔ code ↔ tests
 
 Append-only: a lot adds its own rows and never rewrites another lot's.
-Identifiers come from `docs/spec/cahier-des-charges.fr.md`.
+Identifiers come from `docs/fr/CAHIER-DES-CHARGES.md`.
 
 ## Functional requirements (EF-*)
 

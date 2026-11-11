@@ -6,4 +6,4 @@
 # est un document d'entrée recopié verbatim : ni l'un ni l'autre ne sont du
 # code du projet, ils sont exclus du garde.
 .github/**
-docs/spec/**
+docs/fr/**

@@ -24,7 +24,7 @@ tool runs. An attacking agent that tries to widen its own scope cannot.
 
 > Submitted to the **AWS Agentic MSP Hackathon — Track 2** (Deliver AI-Driven
 > Outcomes for Customers), targeting the *Best Amazon Bedrock Application*
-> special prize. Design document: `docs/spec/cahier-des-charges.fr.md`
+> special prize. Design document: `docs/fr/CAHIER-DES-CHARGES.md`
 > (French, internal), high-level design: `docs/HLD.md`.
 
 ## Status
