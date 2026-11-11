@@ -1,0 +1,459 @@
+{
+ "id": "CORP-guichet-rh",
+ "application_id": "APP-guichet-rh",
+ "tenant_id": "TEN-demo",
+ "source": "jeu de démonstration synthétique (annexe E.3)",
+ "charge_le": "2026-11-11T00:00:00Z",
+ "demandes": [
+  {
+   "id": "DL-0001",
+   "texte": "Comment déclarer un accident du travail survenu dans l'entrepôt ?",
+   "criticite": 4,
+   "frequence_mensuelle": 9,
+   "langue": "fr",
+   "attendu": "la procédure officielle de déclaration",
+   "etiquette": "accident-travail"
+  },
+  {
+   "id": "DL-0002",
+   "texte": "Quelles démarches après un accident de trajet ?",
+   "criticite": 4,
+   "frequence_mensuelle": 7,
+   "langue": "fr",
+   "attendu": "les étapes de déclaration",
+   "etiquette": "accident-trajet"
+  },
+  {
+   "id": "DL-0003",
+   "texte": "Comment signaler une situation de harcèlement en interne ?",
+   "criticite": 4,
+   "frequence_mensuelle": 6,
+   "langue": "fr",
+   "attendu": "le circuit d'alerte interne",
+   "etiquette": "harcelement"
+  },
+  {
+   "id": "DL-0004",
+   "texte": "Quel document fournir pour un arrêt maladie de plus de trois jours ?",
+   "criticite": 4,
+   "frequence_mensuelle": 5,
+   "langue": "fr",
+   "attendu": "le justificatif attendu et le délai",
+   "etiquette": "arret-maladie"
+  },
+  {
+   "id": "DL-0005",
+   "texte": "Je suis victime d'un accident, que dois-je faire immédiatement ?",
+   "criticite": 4,
+   "frequence_mensuelle": 5,
+   "langue": "fr",
+   "attendu": "les premiers gestes et la déclaration",
+   "etiquette": "accident-urgence"
+  },
+  {
+   "id": "DL-0006",
+   "texte": "Comment contester une décision relative à mon arrêt de travail ?",
+   "criticite": 4,
+   "frequence_mensuelle": 4,
+   "langue": "fr",
+   "attendu": "la voie de recours",
+   "etiquette": "recours-arret"
+  },
+  {
+   "id": "DL-0007",
+   "texte": "Quelles sont les obligations de l'employeur après un accident grave ?",
+   "criticite": 4,
+   "frequence_mensuelle": 3,
+   "langue": "fr",
+   "attendu": "les obligations déclaratives",
+   "etiquette": "obligations-employeur"
+  },
+  {
+   "id": "DL-0008",
+   "texte": "Comment demander une visite médicale de reprise ?",
+   "criticite": 4,
+   "frequence_mensuelle": 2,
+   "langue": "fr",
+   "attendu": "la procédure de visite de reprise",
+   "etiquette": "visite-reprise"
+  },
+  {
+   "id": "DL-0009",
+   "texte": "Quel est le circuit d'alerte en cas de danger grave et imminent ?",
+   "criticite": 4,
+   "frequence_mensuelle": 2,
+   "langue": "fr",
+   "attendu": "le droit de retrait et l'alerte",
+   "etiquette": "danger-grave"
+  },
+  {
+   "id": "DL-0010",
+   "texte": "Combien de jours de congé maternité sont prévus par la convention ?",
+   "criticite": 3,
+   "frequence_mensuelle": 14,
+   "langue": "fr",
+   "attendu": "la durée du congé maternité",
+   "etiquette": "conge-maternite"
+  },
+  {
+   "id": "DL-0011",
+   "texte": "Quelles sont les garanties de la mutuelle pour les soins dentaires ?",
+   "criticite": 3,
+   "frequence_mensuelle": 12,
+   "langue": "fr",
+   "attendu": "le niveau de remboursement dentaire",
+   "etiquette": "mutuelle-dentaire"
+  },
+  {
+   "id": "DL-0012",
+   "texte": "Comment rattacher mon conjoint à la mutuelle d'entreprise ?",
+   "criticite": 3,
+   "frequence_mensuelle": 10,
+   "langue": "fr",
+   "attendu": "la démarche de rattachement",
+   "etiquette": "mutuelle-ayants-droit"
+  },
+  {
+   "id": "DL-0013",
+   "texte": "Quel est le délai de remboursement des frais de santé ?",
+   "criticite": 3,
+   "frequence_mensuelle": 9,
+   "langue": "fr",
+   "attendu": "le délai de remboursement",
+   "etiquette": "mutuelle-delai"
+  },
+  {
+   "id": "DL-0014",
+   "texte": "Comment fonctionne le congé paternité depuis la réforme ?",
+   "criticite": 3,
+   "frequence_mensuelle": 8,
+   "langue": "fr",
+   "attendu": "la durée et les modalités",
+   "etiquette": "conge-paternite"
+  },
+  {
+   "id": "DL-0015",
+   "texte": "Quels actes de prévention sont pris en charge par la mutuelle ?",
+   "criticite": 3,
+   "frequence_mensuelle": 7,
+   "langue": "fr",
+   "attendu": "les actes couverts",
+   "etiquette": "mutuelle-prevention"
+  },
+  {
+   "id": "DL-0016",
+   "texte": "Comment obtenir le remboursement d'un médicament prescrit ?",
+   "criticite": 3,
+   "frequence_mensuelle": 6,
+   "langue": "fr",
+   "attendu": "la procédure de remboursement",
+   "etiquette": "remboursement-medoc"
+  },
+  {
+   "id": "DL-0017",
+   "texte": "Ai-je droit au maintien de salaire pendant un arrêt longue durée ?",
+   "criticite": 3,
+   "frequence_mensuelle": 5,
+   "langue": "fr",
+   "attendu": "les conditions de maintien",
+   "etiquette": "maintien-salaire"
+  },
+  {
+   "id": "DL-0018",
+   "texte": "Comment bénéficier d'un temps partiel thérapeutique ?",
+   "criticite": 3,
+   "frequence_mensuelle": 4,
+   "langue": "fr",
+   "attendu": "la démarche de temps partiel thérapeutique",
+   "etiquette": "temps-partiel"
+  },
+  {
+   "id": "DL-0019",
+   "texte": "La portabilité de la mutuelle est-elle payante ?",
+   "criticite": 3,
+   "frequence_mensuelle": 3,
+   "langue": "fr",
+   "attendu": "les conditions de portabilité",
+   "etiquette": "portabilite"
+  },
+  {
+   "id": "DL-0020",
+   "texte": "Comment déclarer un changement de situation familiale ?",
+   "criticite": 3,
+   "frequence_mensuelle": 3,
+   "langue": "fr",
+   "attendu": "le circuit de déclaration",
+   "etiquette": "situation-familiale"
+  },
+  {
+   "id": "DL-0021",
+   "texte": "Quelles pièces fournir pour une demande d'aide sociale ?",
+   "criticite": 3,
+   "frequence_mensuelle": 2,
+   "langue": "fr",
+   "attendu": "la liste des pièces",
+   "etiquette": "aide-sociale"
+  },
+  {
+   "id": "DL-0022",
+   "texte": "Combien de jours de congés payés ai-je acquis cette année ?",
+   "criticite": 2,
+   "frequence_mensuelle": 22,
+   "langue": "fr",
+   "attendu": "le solde de congés",
+   "etiquette": "conges-solde"
+  },
+  {
+   "id": "DL-0023",
+   "texte": "Comment poser un jour de télétravail supplémentaire ?",
+   "criticite": 2,
+   "frequence_mensuelle": 20,
+   "langue": "fr",
+   "attendu": "la démarche de demande",
+   "etiquette": "teletravail"
+  },
+  {
+   "id": "DL-0024",
+   "texte": "Quel est le plafond de remboursement d'un repas professionnel ?",
+   "criticite": 2,
+   "frequence_mensuelle": 18,
+   "langue": "fr",
+   "attendu": "le plafond applicable",
+   "etiquette": "notes-repas"
+  },
+  {
+   "id": "DL-0025",
+   "texte": "Comment déposer une note de frais de déplacement ?",
+   "criticite": 2,
+   "frequence_mensuelle": 17,
+   "langue": "fr",
+   "attendu": "la procédure de dépôt",
+   "etiquette": "notes-transport"
+  },
+  {
+   "id": "DL-0026",
+   "texte": "Quels sont les jours de télétravail possibles par semaine ?",
+   "criticite": 2,
+   "frequence_mensuelle": 15,
+   "langue": "fr",
+   "attendu": "le nombre de jours autorisés",
+   "etiquette": "teletravail-jours"
+  },
+  {
+   "id": "DL-0027",
+   "texte": "Comment réserver une place de parking sur le site ?",
+   "criticite": 2,
+   "frequence_mensuelle": 14,
+   "langue": "fr",
+   "attendu": "la procédure de réservation",
+   "etiquette": "parking"
+  },
+  {
+   "id": "DL-0028",
+   "texte": "Quel est le délai de paiement d'une note de frais validée ?",
+   "criticite": 2,
+   "frequence_mensuelle": 12,
+   "langue": "fr",
+   "attendu": "le délai de règlement",
+   "etiquette": "notes-delai"
+  },
+  {
+   "id": "DL-0029",
+   "texte": "Comment demander un congé pour événement familial ?",
+   "criticite": 2,
+   "frequence_mensuelle": 11,
+   "langue": "fr",
+   "attendu": "les justificatifs et délais",
+   "etiquette": "conges-evenement"
+  },
+  {
+   "id": "DL-0030",
+   "texte": "L'allocation de télétravail couvre-t-elle la connexion ?",
+   "criticite": 2,
+   "frequence_mensuelle": 10,
+   "langue": "fr",
+   "attendu": "le montant et l'objet de l'allocation",
+   "etiquette": "teletravail-allocation"
+  },
+  {
+   "id": "DL-0031",
+   "texte": "Comment modifier un jour de congé déjà posé ?",
+   "criticite": 2,
+   "frequence_mensuelle": 9,
+   "langue": "fr",
+   "attendu": "la procédure de modification",
+   "etiquette": "conges-modification"
+  },
+  {
+   "id": "DL-0032",
+   "texte": "Quel est le plafond d'hébergement pour une nuit en province ?",
+   "criticite": 2,
+   "frequence_mensuelle": 8,
+   "langue": "fr",
+   "attendu": "le plafond applicable",
+   "etiquette": "notes-hebergement"
+  },
+  {
+   "id": "DL-0033",
+   "texte": "Comment obtenir un équipement pour le télétravail ?",
+   "criticite": 2,
+   "frequence_mensuelle": 7,
+   "langue": "fr",
+   "attendu": "la demande d'équipement",
+   "etiquette": "teletravail-equipement"
+  },
+  {
+   "id": "DL-0034",
+   "texte": "Puis-je prendre des congés sans solde, et pour quelle durée ?",
+   "criticite": 2,
+   "frequence_mensuelle": 6,
+   "langue": "fr",
+   "attendu": "les conditions du congé sans solde",
+   "etiquette": "conges-sans-solde"
+  },
+  {
+   "id": "DL-0035",
+   "texte": "Comment fonctionne la récupération des heures supplémentaires ?",
+   "criticite": 2,
+   "frequence_mensuelle": 6,
+   "langue": "fr",
+   "attendu": "les modalités de récupération",
+   "etiquette": "horaires-recuperation"
+  },
+  {
+   "id": "DL-0036",
+   "texte": "Quelles formations sont disponibles dans le plan de cette année ?",
+   "criticite": 2,
+   "frequence_mensuelle": 5,
+   "langue": "fr",
+   "attendu": "le catalogue de formation",
+   "etiquette": "formation"
+  },
+  {
+   "id": "DL-0037",
+   "texte": "Comment déclarer une note de frais rejetée pour justificatif manquant ?",
+   "criticite": 2,
+   "frequence_mensuelle": 4,
+   "langue": "fr",
+   "attendu": "la procédure de régularisation",
+   "etiquette": "notes-rejet"
+  },
+  {
+   "id": "DL-0038",
+   "texte": "Quels sont les horaires des plages fixes de présence ?",
+   "criticite": 2,
+   "frequence_mensuelle": 4,
+   "langue": "fr",
+   "attendu": "les plages fixes",
+   "etiquette": "horaires-plages"
+  },
+  {
+   "id": "DL-0039",
+   "texte": "Comment se passe l'entretien de fin de période d'essai ?",
+   "criticite": 2,
+   "frequence_mensuelle": 3,
+   "langue": "fr",
+   "attendu": "le déroulé de l'entretien",
+   "etiquette": "onboarding-essai"
+  },
+  {
+   "id": "DL-0040",
+   "texte": "Quels sont les horaires de la cantine ?",
+   "criticite": 1,
+   "frequence_mensuelle": 30,
+   "langue": "fr",
+   "attendu": "les horaires du service",
+   "etiquette": "cantine"
+  },
+  {
+   "id": "DL-0041",
+   "texte": "Comment venir au site principal en transports en commun ?",
+   "criticite": 1,
+   "frequence_mensuelle": 25,
+   "langue": "fr",
+   "attendu": "les lignes et arrêts desservis",
+   "etiquette": "plan-acces"
+  },
+  {
+   "id": "DL-0042",
+   "texte": "Où sont affichés les menus de la semaine ?",
+   "criticite": 1,
+   "frequence_mensuelle": 20,
+   "langue": "fr",
+   "attendu": "le lieu d'affichage",
+   "etiquette": "cantine-menus"
+  },
+  {
+   "id": "DL-0043",
+   "texte": "Y a-t-il un service de petit-déjeuner sur le site ?",
+   "criticite": 1,
+   "frequence_mensuelle": 15,
+   "langue": "fr",
+   "attendu": "le service proposé",
+   "etiquette": "cantine-petit-dej"
+  },
+  {
+   "id": "DL-0044",
+   "texte": "Où les visiteurs doivent-ils se présenter ?",
+   "criticite": 1,
+   "frequence_mensuelle": 12,
+   "langue": "fr",
+   "attendu": "l'entrée visiteurs",
+   "etiquette": "plan-visiteurs"
+  },
+  {
+   "id": "DL-0045",
+   "texte": "Comment contacter le support informatique ?",
+   "criticite": 1,
+   "frequence_mensuelle": 10,
+   "langue": "fr",
+   "attendu": "le canal de support",
+   "etiquette": "support"
+  },
+  {
+   "id": "DL-0046",
+   "texte": "Où trouver le règlement intérieur ?",
+   "criticite": 1,
+   "frequence_mensuelle": 8,
+   "langue": "fr",
+   "attendu": "l'emplacement du document",
+   "etiquette": "reglement"
+  },
+  {
+   "id": "DL-0047",
+   "texte": "Quel est le numéro du standard du site ?",
+   "criticite": 1,
+   "frequence_mensuelle": 7,
+   "langue": "fr",
+   "attendu": "le numéro du standard",
+   "etiquette": "standard"
+  },
+  {
+   "id": "DL-0048",
+   "texte": "Y a-t-il des locaux vélos sur le site ?",
+   "criticite": 1,
+   "frequence_mensuelle": 5,
+   "langue": "fr",
+   "attendu": "les équipements disponibles",
+   "etiquette": "locaux-velos"
+  },
+  {
+   "id": "DL-0049",
+   "texte": "Comment réserver une salle de réunion ?",
+   "criticite": 1,
+   "frequence_mensuelle": 4,
+   "langue": "fr",
+   "attendu": "la procédure de réservation",
+   "etiquette": "salle-reunion"
+  },
+  {
+   "id": "DL-0050",
+   "texte": "Où se trouve l'infirmerie du site ?",
+   "criticite": 1,
+   "frequence_mensuelle": 3,
+   "langue": "fr",
+   "attendu": "la localisation de l'infirmerie",
+   "etiquette": "infirmerie"
+  }
+ ]
+}
