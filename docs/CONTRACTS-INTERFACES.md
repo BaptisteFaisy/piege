@@ -129,8 +129,22 @@ ConfigurationCampagne(mandat_id, application_id, tenant_id, type: TypeCampagne,
                        familles: list[Famille] | None = None,
                        parallelisme: int = 4, budget_appels: int = 0,
                        budget_jetons: int = 0, corpus_legitime_id: str = "",
-                       cible_spec: dict = {}, arrete_urgence: bool = False)
+                       cible_spec: dict = {}, arrete_urgence: bool = False,
+                       attaquant=None, juge=None, evaluateur=None,
+                       entrepot=None, fournisseur=None)
 ```
+
+Amendement S0 (injection des composants) : les cinq derniers champs, tous
+optionnels et placés en fin de signature, permettent au moteur de fonctionner
+avant que les lots 4, 5 et 10 soient mergés, et rendent ses tests unitaires
+indépendants. `None` signifie « import paresseux, à l'intérieur de la fonction,
+de l'implémentation réelle » (`piege.agents.attaquant`, `piege.agents.juge`,
+`piege.securite.politique`, `piege.stockage`, `piege.fournisseurs`). Un repli
+hors ligne éventuel (`piege.moteur.replis`) applique exactement les règles de
+CONTRACTS-INTERFACES §3 et ne contient aucune logique métier inédite ; il est
+supprimé dès que les lots correspondants sont mergés. Aucun de ces modules
+n'est importé en tête de fichier du moteur : pas de couplage croisé entre lots
+menés en parallèle.
 
 Guarantees:
 
