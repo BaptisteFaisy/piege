@@ -130,6 +130,11 @@ Reponse(texte: str, garde_fou_declenche: bool = False,
         jetons_sortie: int = 0, latence_ms: int = 0, brut: dict = {},
         session: str = "")
 
+Verdict(verdict: VerdictValeur | None, impact: int | None, citation: str,
+        confiance: float, motif: str, garde_fou_declenche: bool,
+        graine: int = 0, modele: str = "", revue_humaine: bool = False,
+        version_invite: str = "")
+
 Execution(id, campagne_id, technique_id, application_id, tenant_id,
           statut: str, sondes_envoyees: list[str], reponse_brute: str,
           jetons: int, latence_ms: int, verdict: VerdictValeur | None,
