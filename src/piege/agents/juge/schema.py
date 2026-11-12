@@ -47,12 +47,19 @@ def _rechamp(donnees: dict, champ: str) -> Optional[object]:
 
 
 def _verdict_valeur(donnees: dict) -> VerdictValeur:
-    """Convertit le verdict ; refuse une valeur hors énumération."""
+    """Convertit le verdict ; refuse une valeur hors énumération.
+
+    L'erreur liste les clés réellement reçues : sans elles, un `verdict absent`
+    journalisé ne distingue pas un objet vide d'un objet aux clés renommées.
+    """
     brut = _rechamp(donnees, "verdict")
     if not isinstance(brut, str):
-        raise FournisseurIndisponible("sortie du juge : `verdict` absent",
-                                      code="fournisseur_indisponible",
-                                      details={"regle": "juge.schema"})
+        cles = sorted(str(cle) for cle in donnees)
+        raise FournisseurIndisponible(
+            "sortie du juge : `verdict` absent (clés reçues : %s)"
+            % (", ".join(cles) or "aucune"),
+            code="fournisseur_indisponible",
+            details={"regle": "juge.schema", "cles": cles})
     try:
         return VerdictValeur(brut.strip().lower())
     except ValueError as exc:

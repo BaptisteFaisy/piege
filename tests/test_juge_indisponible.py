@@ -7,11 +7,11 @@ import unittest
 
 from piege.correctifs.rejeu import est_ferme
 from piege.erreurs import FournisseurIndisponible
-from piege.moteur import ConfigurationCampagne, executer_campagne
-from piege.types import (Execution, StatutCampagne, VerdictValeur, fixer_horloge)
+from piege.moteur import executer_campagne
+from piege.types import Execution, StatutCampagne, VerdictValeur, fixer_horloge
 
-from doubles import application, mandat, technique
-from doubles_moteur import CibleDouble, EntrepotDouble, JournalDouble, juge_double
+from doubles_moteur import (CibleDouble, EntrepotDouble, JournalDouble,
+                            configuration_campagne, juge_double)
 
 INSTANT = "2026-11-24T09:14:03Z"
 
@@ -32,18 +32,6 @@ def juge_selectif(panne_sur):
         return juge_double()(technique_, transcription, fournisseur, graine)
 
     return juge
-
-
-def config(**kw) -> ConfigurationCampagne:
-    """Configuration de campagne sur trois techniques."""
-    techniques = [technique(id="A1"), technique(id="C1"), technique(id="C4")]
-    valeurs = dict(mandat=mandat(perimetre_techniques=["A1", "C1", "C4"]),
-                   application=application(), cible=CibleDouble(),
-                   techniques=techniques, graine=20261124, parallelisme=1,
-                   juge=juge_double(), journal=JournalDouble(),
-                   entrepot=EntrepotDouble())
-    valeurs.update(kw)
-    return ConfigurationCampagne(**valeurs)
 
 
 def execution(statut="execute", verdict=VerdictValeur.ECHOUE, erreur="",
@@ -68,13 +56,15 @@ class TestJugeDefaillant(unittest.TestCase):
 
     def test_campagne_terminee_malgre_juge_hs(self):
         entrepot = EntrepotDouble()
-        campagne = executer_campagne(config(juge=juge_en_panne, entrepot=entrepot))
+        campagne = executer_campagne(
+            configuration_campagne(juge=juge_en_panne, entrepot=entrepot))
         self.assertEqual(campagne.statut, StatutCampagne.TERMINEE)
         self.assertEqual(len(entrepot.lister("executions")), 3)
 
     def test_execution_marquee_en_revue(self):
         entrepot = EntrepotDouble()
-        executer_campagne(config(juge=juge_en_panne, entrepot=entrepot))
+        executer_campagne(
+            configuration_campagne(juge=juge_en_panne, entrepot=entrepot))
         for brute in entrepot.lister("executions"):
             self.assertEqual(brute["statut"], "verdict_indisponible")
             self.assertIsNone(brute["verdict"])
@@ -84,14 +74,15 @@ class TestJugeDefaillant(unittest.TestCase):
     def test_aucune_decouverte_inventee(self):
         """Pas de verdict → pas de découverte : on ne devine jamais."""
         entrepot = EntrepotDouble()
-        executer_campagne(config(juge=juge_en_panne, entrepot=entrepot))
+        executer_campagne(
+            configuration_campagne(juge=juge_en_panne, entrepot=entrepot))
         self.assertEqual(entrepot.lister("findings"), [])
 
     def test_panne_partielle(self):
         """Une technique en panne n'empêche pas les autres d'être jugées."""
         entrepot = EntrepotDouble()
         campagne = executer_campagne(
-            config(juge=juge_selectif({"C1"}), entrepot=entrepot))
+            configuration_campagne(juge=juge_selectif({"C1"}), entrepot=entrepot))
         self.assertEqual(campagne.statut, StatutCampagne.TERMINEE)
         par_technique = {e["technique_id"]: e for e in entrepot.lister("executions")}
         self.assertEqual(par_technique["C1"]["statut"], "verdict_indisponible")
@@ -101,19 +92,20 @@ class TestJugeDefaillant(unittest.TestCase):
     def test_sonde_toujours_envoyee(self):
         """L'attaque a bien eu lieu : seule la mesure du verdict a échoué."""
         cible = CibleDouble()
-        executer_campagne(config(juge=juge_en_panne, cible=cible))
+        executer_campagne(configuration_campagne(juge=juge_en_panne, cible=cible))
         self.assertEqual(len(cible.appels), 3)
 
     def test_journal_trace_l_incident(self):
         journal = JournalDouble()
-        executer_campagne(config(juge=juge_en_panne, journal=journal))
+        executer_campagne(configuration_campagne(juge=juge_en_panne, journal=journal))
         self.assertTrue(any(l["quoi"] == "verdict_indisponible"
                             for l in journal.lignes))
 
     def test_sondes_conservees_pour_rejeu(self):
         """La transcription reste disponible : un humain peut trancher."""
         entrepot = EntrepotDouble()
-        executer_campagne(config(juge=juge_en_panne, entrepot=entrepot))
+        executer_campagne(
+            configuration_campagne(juge=juge_en_panne, entrepot=entrepot))
         brute = entrepot.lister("executions")[0]
         self.assertTrue(brute["sondes_envoyees"])
         self.assertTrue(brute["reponse_brute"])
