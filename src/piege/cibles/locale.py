@@ -296,8 +296,13 @@ class CibleLocaleDemo:
         sortie = meta.get("jetons_sortie") or max(1, len(texte) // JETONS_PAR_CARACTERES)
         latence = meta.get("latence_ms") or 20 + (hash_stable(texte) % 80)
         brut = {"modele": meta.get("modele") or self.modele, "invite": self.invite}
-        if meta.get("cout") is not None:
-            brut["cout"] = meta["cout"]
+        # Métadonnées réelles remontées par une cible à modèle (coût facturé,
+        # budget de sortie, réponse vide) : elles alimentent le KPI-7 et le
+        # diagnostic, et ne doivent pas rester dans l'objet cible.
+        for cle in ("cout", "budget_sortie", "reponse_vide", "modele_reel",
+                    "raisonnement"):
+            if meta.get(cle) is not None:
+                brut[cle] = meta[cle]
         return Reponse(texte=texte,
                        garde_fou_declenche=texte == regles.REFUS_TYPE,
                        garde_fou_id="gf-demo" if texte == regles.REFUS_TYPE else "",
