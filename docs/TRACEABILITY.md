@@ -3,6 +3,10 @@
 Append-only: a lot adds its own rows and never rewrites another lot's.
 Identifiers come from `docs/fr/CAHIER-DES-CHARGES.md`.
 
+La **preuve exécutable** des recettes (R1–R20) est en fin de document :
+chaque recette est reliée à ses tests, et le résultat de leur exécution
+fait foi — `python3 scripts/preuves/recettes.py`.
+
 ## Functional requirements (EF-*)
 
 | Id | Requirement | Code | Tests | Lot | Status |
@@ -93,3 +97,30 @@ Identifiers come from `docs/fr/CAHIER-DES-CHARGES.md`.
 | C8 disjoint file ownership | `couche0` check | — | ongoing |
 | C9 reproducibility | `hash_stable`, seeds | R13 | partial |
 | C10 no availability attack | catalogue budgets | catalogue validator | todo |
+
+## Recettes (R1–R20) — preuve exécutable
+
+Chaque recette est reliée à ses tests ; la preuve est le résultat de leur exécution, pas une déclaration.
+
+| Recette | Exigence | Attendu | Preuve (test) | Résultat |
+|---|---|---|---|---|
+| R1 | Lancer une campagne sans mandat | Refus explicite, aucune sonde envoyée | `test_securite_mandats.py::test_r1_aucun_mandat` | **prouve** |
+| R2 | Lancer une campagne avec mandat expiré | Refus explicite | `test_moteur_perimetre.py::test_r2_mandat_expire`, `test_securite_mandats.py::test_r2_mandat_expire` | **prouve** |
+| R3 | Dépasser le budget d'appels | Arrêt propre, état conservé, campagne marquée `interrompue` | `test_moteur_budget.py::test_r3_aucune_sonde_apres_le_seuil`, `test_moteur_budget.py::test_r3_campagne_interrompue`, `test_moteur_budget.py::test_r3_etat_conserve` | **prouve** |
+| R4 | Viser une application hors périmètre | 403 de Policy, tracé dans le journal | `test_demo_bout_en_bout.py::test_r4_hors_perimetre_sans_sonde` | **prouve** |
+| R5 | Suspendre une campagne en cours | Arrêt en moins de 5 s, reprise possible | `test_moteur_arret.py` | **prouve** |
+| R6 | Exécuter la famille A sur la cible de démo | A1 réussit, sévérité Critique calculée | `test_demo_bout_en_bout.py`, `test_severite.py` | **prouve** |
+| R7 | Exécuter la famille F sur l'index de test | Relais détecté, index détruit, aucune trace dans le corpus | `test_famille_f.py` | **prouve** |
+| R8 | Exécuter la famille G sans corpus légitime | Refus explicite, pas de chiffre vide | `test_famille_g.py` | **prouve** |
+| R9 | Exécuter la famille G avec corpus | 31 faux refus classés, perte chiffrée | `test_corpus_benchmark.py`, `test_famille_g.py` | **prouve** |
+| R10 | Appliquer un correctif sans accord | Refus | `test_correctifs.py::test_r10_sans_accord` | **prouve** |
+| R11 | Appliquer un correctif avec accord | Application, rejeu, preuve de fermeture datée | `test_correctifs.py`, `test_correctifs_boucle.py` | **prouve** |
+| R12 | Vérifier l'effet de bord | Augmentation des faux refus signalée sur la même ligne | `test_correctifs_boucle.py` | **prouve** |
+| R13 | Deux campagnes à graine identique | Verdicts identiques sur les techniques déterministes | `test_demo_bout_en_bout.py::test_r13_graines_distinctes`, `test_demo_bout_en_bout.py::test_r13_reproductibilite`, `test_reproductibilite.py::test_r13_sondes_identiques` | **prouve** |
+| R14 | Un client A tente de lire les findings de B | Refus, journalisé | `test_api.py::test_r14_findings_isoles`, `test_multi_tenant.py::test_r14_lecture_directe_refusee`, `test_multi_tenant.py::test_r14_tentative_journalisee` | **prouve** |
+| R15 | Exporter le rapport en anglais | Rapport complet, citations incluses | `test_rapport.py::test_r15_export_anglais` | **prouve** |
+| R16 | Générer une attestation tierce | Attestation pauvre, sans détail exploitable | `test_rapport.py::test_r16_sans_detail_exploitable` | **prouve** |
+| R17 | Consulter le coût mesuré | Écart < 25 % avec l'estimation de l'annexe F | `test_cout_mesure.py` | **prouve** |
+| R18 | Ajouter une technique au catalogue | Exécutable sans modification de code | `test_catalogue.py::test_r18_ajout_sans_code` | **prouve** |
+| R19 | Rejouer un finding depuis le portail | Rejeu identique à l'original | `test_api.py`, `test_correctifs_boucle.py` | **prouve** |
+| R20 | Purger un tenant | Données absentes, preuve de purge | `test_multi_tenant.py`, `test_stockage_local.py` | **prouve** |
