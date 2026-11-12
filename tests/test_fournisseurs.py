@@ -228,3 +228,96 @@ class TestBedrock(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestDelaiEtNouvellesTentatives(unittest.TestCase):
+    """Mode réel : un appel lent ne doit pas faire échouer toute la campagne."""
+
+    def test_delai_par_defaut(self):
+        from piege.fournisseurs.inferhub import TIMEOUT_DEFAUT, FournisseurInferhub
+
+        self.assertGreaterEqual(TIMEOUT_DEFAUT, 120)
+        self.assertEqual(FournisseurInferhub(cle="k").timeout, TIMEOUT_DEFAUT)
+
+    def test_delai_par_variable(self):
+        from piege.fournisseurs.inferhub import FournisseurInferhub
+
+        os.environ["PIEGE_LLM_TIMEOUT"] = "240"
+        try:
+            self.assertEqual(FournisseurInferhub(cle="k").timeout, 240)
+        finally:
+            os.environ.pop("PIEGE_LLM_TIMEOUT", None)
+
+    def test_delai_explicite_prioritaire(self):
+        from piege.fournisseurs.inferhub import FournisseurInferhub
+
+        os.environ["PIEGE_LLM_TIMEOUT"] = "240"
+        try:
+            self.assertEqual(FournisseurInferhub(cle="k", timeout=30).timeout, 30)
+        finally:
+            os.environ.pop("PIEGE_LLM_TIMEOUT", None)
+
+    def test_nouvelle_tentative_apres_timeout(self):
+        """Un transport qui échoue puis répond : l'appel aboutit."""
+        from piege.fournisseurs.inferhub import FournisseurInferhub
+        from piege.erreurs import FournisseurIndisponible
+
+        etat = {"n": 0}
+
+        def transport(url, charge, cle):
+            etat["n"] += 1
+            if etat["n"] == 1:
+                raise FournisseurIndisponible("read timed out",
+                                              code="fournisseur_indisponible")
+            return {"choices": [{"message": {"content": "bonjour"}}],
+                    "usage": {"prompt_tokens": 3, "completion_tokens": 1}}
+
+        fournisseur = FournisseurInferhub(cle="k", transport=transport,
+                                          tentatives=2)
+        reponse = fournisseur.completer([{"role": "user", "content": "x"}], 1)
+        self.assertEqual(reponse.texte, "bonjour")
+        self.assertEqual(etat["n"], 2)
+
+    def test_tentatives_epuisees(self):
+        from piege.fournisseurs.inferhub import FournisseurInferhub
+        from piege.erreurs import FournisseurIndisponible
+
+        def transport(url, charge, cle):
+            raise FournisseurIndisponible("read timed out",
+                                          code="fournisseur_indisponible")
+
+        fournisseur = FournisseurInferhub(cle="k", transport=transport,
+                                          tentatives=3)
+        with self.assertRaises(FournisseurIndisponible):
+            fournisseur.completer([{"role": "user", "content": "x"}], 1)
+
+    def test_une_seule_tentative_si_demande(self):
+        from piege.fournisseurs.inferhub import FournisseurInferhub
+        from piege.erreurs import FournisseurIndisponible
+
+        appels = []
+
+        def transport(url, charge, cle):
+            appels.append(1)
+            raise FournisseurIndisponible("ko", code="fournisseur_indisponible")
+
+        with self.assertRaises(FournisseurIndisponible):
+            FournisseurInferhub(cle="k", transport=transport,
+                                tentatives=1).completer([{"role": "user",
+                                                          "content": "x"}], 1)
+        self.assertEqual(len(appels), 1)
+
+    def test_cout_reel_capté(self):
+        """Le coût renvoyé par le routeur alimente le KPI-7."""
+        from piege.fournisseurs.inferhub import FournisseurInferhub
+
+        def transport(url, charge, cle):
+            return {"choices": [{"message": {"content": "ok"}}],
+                    "usage": {"prompt_tokens": 10, "completion_tokens": 5,
+                              "cost": 0.00002,
+                              "completion_tokens_details": {"reasoning_tokens": 4}}}
+
+        reponse = FournisseurInferhub(cle="k", transport=transport).completer(
+            [{"role": "user", "content": "x"}], 1)
+        self.assertEqual(reponse.brut["cout"], 0.00002)
+        self.assertEqual(reponse.brut["raisonnement"], 4)
