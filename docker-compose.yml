@@ -1,0 +1,26 @@
+# Piège — pile locale en une commande : `docker compose up`.
+# Le cœur tourne hors ligne ; aucun compte AWS n'est requis pour la démo.
+services:
+  api:
+    build: .
+    image: piege:latest
+    container_name: piege-api
+    ports:
+      - "8080:8080"
+    environment:
+      PIEGE_DONNEES: /data
+      # Fournisseur local déterministe par défaut ; passer à `bedrock` avec des
+      # identifiants AWS pour le mode réel (voir docs/DEPLOY-ONPREM.md).
+      PIEGE_FOURNISSEUR: local
+    volumes:
+      - piege-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  piege-data:
