@@ -140,6 +140,7 @@ def _index(dossier: str, campagne, findings, preuves: list) -> str:
         "| `tracabilite.md` | Les statuts recalculés des exigences (EF/ENF/KPI) |",
         "| `evaluation.json` | La précision du juge et la détection, mesurées (§24) |",
         "| `preuves.json` | La chaîne de preuves de la campagne (une empreinte par étape) |",
+        "| `demo-reel.md` | La **démo réelle rejouée** : réponses enregistrées du vrai modèle, 0 € |",
         "", "## Campagne", "",
         "- identifiant : `%s`" % campagne.id,
         "- techniques exécutées : %s" % ", ".join(campagne.techniques_executes or []),
@@ -213,6 +214,9 @@ def _ecrire_pieces(entrepot, campagne, config, sortie: str) -> list:
             _lancer([sys.executable, "scripts/preuves/tracabilite.py"]))
     _ecrire(os.path.join(sortie, "evaluation.json"),
             _lancer([sys.executable, "eval/mesurer.py", "--json"]))
+    _lancer([sys.executable, "scripts/jury/demo-reel.py",
+             "--magasin", os.path.join(sortie, "donnees-reel"),
+             "--sortie", os.path.join(sortie, "demo-reel.md")])
     preuves = chaines_depuis_entrepot(entrepot, campagne.id, campagne.tenant_id)
     _ecrire(os.path.join(sortie, "preuves.json"),
             json.dumps(preuves, ensure_ascii=False, indent=1))
