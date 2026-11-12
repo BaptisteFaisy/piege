@@ -8,6 +8,10 @@ pas interroger la cible (spécification §18.1).
 
 from piege.agents.juge.double_passage import (confronter, graine_secondaire,
                                               second_passage)
+from piege.agents.juge.evaluation import (CIBLE_ACCORD, CIBLE_DETECTION,
+                                          CIBLE_FAUX_POSITIFS, charger_cibles,
+                                          mesurer_detection, mesurer_juge,
+                                          rapport, technique_etalon)
 from piege.agents.juge.juge import juger
 from piege.agents.juge.local import juger_deterministe
 from piege.agents.juge.prompts import VERSION_INVITE
@@ -19,4 +23,6 @@ __all__ = [
     "juger", "juger_deterministe", "second_passage", "confronter",
     "graine_secondaire", "revue_humaine_requise", "seuil_confiance", "trancher",
     "SEUIL_DEFAUT", "SCHEMA", "valider_sortie", "VERSION_INVITE",
+    "charger_cibles", "mesurer_juge", "mesurer_detection", "rapport",
+    "technique_etalon", "CIBLE_ACCORD", "CIBLE_DETECTION", "CIBLE_FAUX_POSITIFS",
 ]
