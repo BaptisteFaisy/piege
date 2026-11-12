@@ -180,7 +180,7 @@ class TestGenerationReelle(unittest.TestCase):
     def test_max_jetons_et_temperature(self):
         self.demo.sonder(DEMANDE_LEGITIME, "S-1", 7)
         appel = self.fournisseur.appels[0]
-        self.assertEqual(appel["max_jetons"], 500)
+        self.assertEqual(appel["max_jetons"], self.demo.max_jetons_sortie)
         self.assertEqual(appel["temperature"], 0.2)
 
 
@@ -209,3 +209,80 @@ class TestContexte(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBudgetSortieReelle(unittest.TestCase):
+    """Un modèle qui raisonne ne doit pas rendre de réponse vide."""
+
+    def setUp(self):
+        fixer_horloge(INSTANT)
+
+    def tearDown(self):
+        fixer_horloge(None)
+        os.environ.pop("PIEGE_CIBLE_MAX_JETONS", None)
+
+    def test_budget_par_defaut_large(self):
+        from piege.cibles.inferhub import MAX_JETONS_SORTIE
+
+        self.assertGreaterEqual(MAX_JETONS_SORTIE, 3000)
+        self.assertEqual(cible().max_jetons_sortie, MAX_JETONS_SORTIE)
+
+    def test_budget_par_variable(self):
+        os.environ["PIEGE_CIBLE_MAX_JETONS"] = "5000"
+        self.assertEqual(cible().max_jetons_sortie, 5000)
+
+    def test_budget_par_spec_prioritaire(self):
+        os.environ["PIEGE_CIBLE_MAX_JETONS"] = "5000"
+        self.assertEqual(cible(max_jetons_sortie=1200).max_jetons_sortie, 1200)
+
+    def test_relance_sur_reponse_vide(self):
+        """Première réponse vide (budget absorbé) → relance à budget triple."""
+
+        class FournisseurVidePuisPlein:
+            nom = "double"
+
+            def __init__(self):
+                self.budgets = []
+
+            def completer(self, messages, graine, max_jetons=1500, temperature=0.0):
+                from piege.fournisseurs.base import ReponseModele
+
+                self.budgets.append(max_jetons)
+                texte = "" if len(self.budgets) == 1 else "réponse au second essai"
+                return ReponseModele(texte=texte, jetons_entree=10,
+                                     jetons_sortie=len(texte), modele="double",
+                                     brut={"cout": 0.00001})
+
+        fournisseur = FournisseurVidePuisPlein()
+        demo = cible(fournisseur)
+        reponse = demo.sonder(DEMANDE_LEGITIME, "S-1", 7)
+        self.assertEqual(reponse.texte, "réponse au second essai")
+        self.assertEqual(fournisseur.budgets[1], fournisseur.budgets[0] * 3)
+
+    def test_reponse_vide_tracée(self):
+        """Deux réponses vides : l'échec est tracé, jamais masqué."""
+
+        class FournisseurToujoursVide:
+            nom = "double"
+
+            def __init__(self):
+                self.appels = 0
+
+            def completer(self, messages, graine, max_jetons=1500, temperature=0.0):
+                from piege.fournisseurs.base import ReponseModele
+
+                self.appels += 1
+                return ReponseModele(texte="", jetons_entree=10, jetons_sortie=0,
+                                     modele="double", brut={})
+
+        fournisseur = FournisseurToujoursVide()
+        demo = cible(fournisseur)
+        reponse = demo.sonder(DEMANDE_LEGITIME, "S-1", 7)
+        self.assertEqual(reponse.texte, "")
+        self.assertTrue(reponse.brut["reponse_vide"])
+        self.assertEqual(fournisseur.appels, 2)      # une seule relance, bornée
+
+    def test_une_seule_relance(self):
+        from piege.cibles.inferhub import MULTIPLICATEUR_RELANCE
+
+        self.assertEqual(MULTIPLICATEUR_RELANCE, 3)
