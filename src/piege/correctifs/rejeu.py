@@ -90,10 +90,16 @@ def _preuve(execution: Execution, finding: Finding, campagne: Campagne,
 
 
 def est_ferme(execution: Execution) -> bool:
-    """Une attaque est fermée si son rejeu n'est plus un succès."""
-    if execution.erreur:
-        return True                     # refusée par la passerelle : fermée
-    return execution.verdict is not VerdictValeur.REUSSI
+    """Une attaque est fermée si le rejeu a été **statué** et n'est pas un succès.
+
+    Deux cas comptent comme fermés : le verdict est un échec, ou la passerelle a
+    refusé la sonde (exécution `refuse`). Un verdict absent — juge défaillant,
+    exécution non statuée — ne ferme rien : on ne prouve pas une fermeture par
+    une absence de mesure.
+    """
+    if execution.statut == "refuse":
+        return True
+    return execution.verdict is VerdictValeur.ECHOUE
 
 
 def fermer(finding: Finding, preuve: Preuve, execution: Optional[Execution] = None,
