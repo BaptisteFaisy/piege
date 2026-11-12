@@ -31,8 +31,13 @@ above 25 % with the annex F projection triggers review R17.
 
 ## Retention and purge
 
-`DELETE /tenants/{id}` (the local proof of purge is `R20`; the DynamoDB adapter
-iterates the `par-tenant` index). Proofs are immutable and versioned in S3.
+`DELETE /tenants/{id}` is routed: it purges every table of the tenant and
+returns the dated purge proof (SHA-256 fingerprint + proof file). The response
+also carries the tenant's retention window (`retention_jours`) and the date it
+expires — the duration is read from the tenant record, not a dead field. A
+customer may purge **their own** tenant only; the MSP analyst purges any
+tenant of the fleet. The local proof of purge is `R20`; the DynamoDB adapter
+iterates the `par-tenant` index. Proofs are immutable and versioned in S3.
 
 ## Rollback
 
