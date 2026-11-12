@@ -124,3 +124,77 @@ Chaque recette est reliée à ses tests ; la preuve est le résultat de leur ex�
 | R18 | Ajouter une technique au catalogue | Exécutable sans modification de code | `test_catalogue.py::test_r18_ajout_sans_code` | **prouve** |
 | R19 | Rejouer un finding depuis le portail | Rejeu identique à l'original | `test_api.py`, `test_correctifs_boucle.py` | **prouve** |
 | R20 | Purger un tenant | Données absentes, preuve de purge | `test_multi_tenant.py`, `test_stockage_local.py` | **prouve** |
+
+## Statuts vérifiés — recalculés sur le dépôt (généré)
+
+Statut recalculé à partir de l'existence réelle du **code** et des **tests** référencés, indépendamment du statut déclaré à l'ouverture des lots. `done` = code ET test présents ; `partial` = l'un des deux ; `todo` = aucun des deux ne référence de code ni de test (une ligne peut être implémentée sans que ce document ait renseigné ses colonnes Code/Tests).
+
+| EF | Exigences fonctionnelles |
+|---|---|
+| EF-01 | done (inchangé) |
+| EF-02 | todo (inchangé) |
+| EF-03 | done (inchangé) |
+| EF-04 | partial (déclaré todo) |
+| EF-05 | partial (déclaré todo) |
+| EF-10 | todo (inchangé) |
+| EF-11 | todo (inchangé) |
+| EF-12 | partial (déclaré todo) |
+| EF-13 | done (déclaré partial) |
+| EF-14 | todo (inchangé) |
+| EF-15 | partial (déclaré todo) |
+| EF-16 | todo (inchangé) |
+| EF-17 | partial (déclaré todo) |
+| EF-20 | todo (inchangé) |
+| EF-21 | todo (inchangé) |
+| EF-22 | todo (inchangé) |
+| EF-23 | done (inchangé) |
+| EF-24 | todo (inchangé) |
+| EF-30 | done (déclaré partial) |
+| EF-31 | partial (déclaré todo) |
+| EF-32 | partial (déclaré todo) |
+| EF-33 | done (inchangé) |
+| EF-34 | done (déclaré partial) |
+| EF-40 | todo (inchangé) |
+| EF-41 | todo (inchangé) |
+| EF-42 | done (déclaré partial) |
+| EF-43 | partial (déclaré todo) |
+| EF-44 | todo (inchangé) |
+| EF-45 | partial (déclaré todo) |
+| EF-50 | todo (inchangé) |
+| EF-51 | partial (déclaré todo) |
+| EF-52 | todo (inchangé) |
+| EF-53 | partial (déclaré todo) |
+| EF-54 | partial (déclaré todo) |
+| EF-60 | partial (déclaré todo) |
+| EF-61 | partial (déclaré todo) |
+| EF-62 | todo (inchangé) |
+| EF-63 | partial (déclaré todo) |
+
+| ENF | Exigences non fonctionnelles |
+|---|---|
+| ENF-01 | done (déclaré partial) |
+| ENF-02 | partial (déclaré todo) |
+| ENF-03 | done (déclaré todo) |
+| ENF-04 | done (déclaré partial) |
+| ENF-05 | done (déclaré partial) |
+| ENF-06 | partial (déclaré todo) |
+| ENF-07 | done (déclaré todo) |
+| ENF-08 | partial (déclaré todo) |
+| ENF-09 | todo (inchangé) |
+| ENF-10 | partial (déclaré todo) |
+| ENF-11 | partial (inchangé) |
+| ENF-12 | done (inchangé) |
+| ENF-13 | partial (déclaré todo) |
+| ENF-14 | partial (déclaré todo) |
+| ENF-15 | partial (déclaré todo) |
+
+| KPI | Indicateurs |
+|---|---|
+| KPI-1 | todo (inchangé) |
+| KPI-2 | done (déclaré partial) |
+| KPI-3 | todo (inchangé) |
+| KPI-4 | done (déclaré todo) |
+| KPI-5 | done (déclaré partial) |
+| KPI-6 | todo (inchangé) |
+| KPI-7 | partial (déclaré todo) |
+| KPI-8 | done (déclaré partial) |
