@@ -138,10 +138,18 @@ class FournisseurInferhub:
         reponse = self._appeler(messages, graine, max_jetons, temperature, False)
         contenu = self._contenu(reponse)
         usage = reponse.get("usage") or {}
+        brut = {"graine": graine, "modele_reel": reponse.get("model", "")}
+        # Le routeur renvoie le coût réel de l'appel : on le conserve pour la
+        # mesure exacte du KPI-7 (coût mesuré, jamais estimé).
+        if usage.get("cost") is not None:
+            brut["cout"] = float(usage["cost"])
+        if usage.get("completion_tokens_details"):
+            brut["raisonnement"] = usage["completion_tokens_details"].get(
+                "reasoning_tokens", 0)
         return ReponseModele(
             texte=contenu, jetons_entree=int(usage.get("prompt_tokens", 0)),
             jetons_sortie=int(usage.get("completion_tokens", 0)),
-            modele=self.modele, brut={"graine": graine})
+            modele=self.modele, brut=brut)
 
     def sortie_structuree(self, messages: list[dict], schema: dict,
                           graine: int) -> dict:

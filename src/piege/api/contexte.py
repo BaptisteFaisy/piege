@@ -45,7 +45,10 @@ class Api:
                 details={"regle": "api.cible"}) from exc
 
         specification = dict(spec or {})
-        specification.setdefault("type", "local")
+        # `PIEGE_CIBLE_TYPE` bascule toute l'instance sur une cible à modèle réel
+        # (inferhub) sans toucher au portail ni au code : c'est l'interrupteur
+        # « simulateur déterministe » ↔ « vrai modèle ».
+        specification.setdefault("type", os.environ.get("PIEGE_CIBLE_TYPE", "local"))
         specification.setdefault("id", application_id)
         specification.setdefault("application_id", application_id)
         specification.setdefault("corpus", self.dossier_corpus)

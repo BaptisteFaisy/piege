@@ -14,7 +14,7 @@ from piege.types import Reponse
 
 __all__ = ["Cible", "creer_cible", "TYPES_CIBLE"]
 
-TYPES_CIBLE = ("local", "http", "bedrock")
+TYPES_CIBLE = ("local", "http", "bedrock", "inferhub")
 
 
 class Cible(Protocol):
@@ -58,5 +58,9 @@ def creer_cible(spec: dict) -> Any:
         from piege.cibles.bedrock import CibleBedrock
 
         return CibleBedrock(spec)
+    if kind == "inferhub":
+        from piege.cibles.inferhub import CibleInferhub
+
+        return CibleInferhub(spec)
     raise ValueError("type de cible inconnu : %r (attendu %s)"
                      % (kind, list(TYPES_CIBLE)))

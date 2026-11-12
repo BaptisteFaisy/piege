@@ -42,6 +42,7 @@ def lancer_campagne(api: Any, tenant: str, roles: list, corps: dict, **_) -> dic
     mandat = _mandat(api, tenant, str(corps.get("mandat_id", "")))
     application = _application(api, tenant, mandat.application_id)
     config = _configuration(api, tenant, corps, mandat, application)
+    _plafonner_techniques(config)
     campagne = executer_campagne(config)
     ecrire(api, "campagnes", campagne.vers_dict())
     executions = [depuis_dict(Execution, e)
@@ -52,6 +53,34 @@ def lancer_campagne(api: Any, tenant: str, roles: list, corps: dict, **_) -> dic
     return {"campagne": campagne.vers_dict(),
             "executions": len(executions), "findings": len(findings),
             "budget": budget_restant(campagne, mandat=mandat)}
+
+
+def _plafonner_techniques(config) -> None:
+    """Plafond de techniques par campagne (garde-fou de l'instance publique).
+
+    En mode « vrai modèle », chaque technique coûte un appel de modèle (cible)
+    et un verdict (juge) : une campagne complète de 60 techniques prendrait
+    plusieurs minutes sur une instance publique partagée. `PIEGE_MAX_TECHNIQUES`
+    borne la demande et le dit explicitement, sans jamais tronquer en silence.
+    """
+    import os
+
+    from piege.erreurs import ErreurPiege
+    from piege.moteur.resolution import resoudre_techniques
+
+    brut = os.environ.get("PIEGE_MAX_TECHNIQUES", "")
+    if not brut:
+        return
+    plafond = int(brut)
+    techniques = resoudre_techniques(config)
+    if len(techniques) > plafond:
+        raise ErreurPiege(
+            "instance publique : %d techniques demandées, plafond de %d. "
+            "Réduire le périmètre du mandat ou la liste de techniques."
+            % (len(techniques), plafond),
+            code="plafond_techniques",
+            details={"regle": "api.plafond", "demandees": len(techniques),
+                     "plafond": plafond})
 
 
 def _mandat(api: Any, tenant: str, mandat_id: str) -> Mandat:
@@ -74,12 +103,15 @@ def _configuration(api: Any, tenant: str, corps: dict, mandat: Mandat,
                    application: Application) -> ConfigurationCampagne:
     """Construit la configuration de campagne depuis la requête."""
     familles = [Famille(f) for f in (corps.get("familles") or [])]
+    technique_ids = corps.get("technique_ids") or None
+    if not technique_ids and not familles:
+        technique_ids = _techniques_applicables(api, application, mandat, corps)
     return ConfigurationCampagne(
         mandat=mandat, application=application, mandat_id=mandat.id,
         application_id=application.id, tenant_id=tenant,
         type=TypeCampagne(str(corps.get("type", "complete"))),
         graine=int(corps.get("graine", 0)),
-        technique_ids=corps.get("technique_ids") or None,
+        technique_ids=technique_ids,
         familles=familles or None,
         parallelisme=int(corps.get("parallelisme", 4)),
         cible_spec=dict(corps.get("cible_spec") or {}),
@@ -87,6 +119,26 @@ def _configuration(api: Any, tenant: str, corps: dict, mandat: Mandat,
         catalogue=_catalogue(api),
         fournisseur=api.fournisseur, juge=api.juge, entrepot=api.entrepot,
         corpus_legitime_id=str(corps.get("corpus_legitime_id", "")))
+
+
+def _techniques_applicables(api: Any, application: Application, mandat: Mandat,
+                            corps: dict) -> Optional[list]:
+    """Périmètre réellement exécutable (EF-02), au lieu de tout le catalogue.
+
+    Sans ce filtre la campagne « tentait » les 60 techniques pour en voir 58
+    refusées par la politique : autant d'exécutions vides, et un plafond de
+    techniques dépourvu de sens en mode réel. Une technique demandée
+    explicitement hors périmètre reste refusée par la politique (R4).
+    """
+    from piege.catalogue import techniques_applicables
+
+    catalogue = _catalogue(api)
+    if not catalogue:
+        return None
+    applicables = techniques_applicables(
+        application, mandat, catalogue,
+        corpus_legitime=bool(corps.get("corpus_legitime_id")))
+    return [technique.id for technique in applicables] or None
 
 
 def lire_campagne(api: Any, tenant: str, roles: list, id: str, **_) -> dict:

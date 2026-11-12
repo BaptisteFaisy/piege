@@ -92,6 +92,7 @@ class CibleLocaleDemo:
                                charger_corpus(self.corpus_dossier))
         self._index = construire_index(self._documents)
         self._cache_index: dict = {}
+        self._meta: Optional[dict] = None
         self._depots: dict[str, list[Document]] = {}
         self._sessions: dict[str, list[str]] = {}
         self._journal: list[dict] = []
@@ -178,11 +179,23 @@ class CibleLocaleDemo:
         return "%s %s" % (demande, decode) if decode else demande
 
     def _repondre(self, texte: str, session: str) -> str:
-        """Chaîne de décision de l'assistant : garde-fous, dépôt, injection."""
+        """Chaîne de décision de l'assistant : garde-fous, récupération, génération."""
+        self._meta = None
         theme = regles.theme_sensible(texte)
         if self._bloque(theme, texte):
             return regles.REFUS_TYPE
         recuperes = rechercher(texte, self._index_session(session), self.k)
+        return self._generer(texte, recuperes, session)
+
+    def _generer(self, texte: str, recuperes: list, session: str) -> str:
+        """Génération de la réponse — **point d'extension**.
+
+        La cible de démonstration répond par règles (déterministe, hors ligne).
+        `CibleInferhub` surcharge cette méthode pour faire répondre un vrai
+        modèle sur les mêmes documents récupérés : la récupération, les
+        garde-fous et les dépôts de la famille F restent strictement identiques,
+        seule la génération change.
+        """
         depot = self._depot_arme(recuperes)
         if depot is not None:
             return self._repondre_depot(depot, texte)
@@ -276,13 +289,17 @@ class CibleLocaleDemo:
         return meilleure[:longueur]
 
     def _envelopper(self, texte: str, session: str) -> Reponse:
-        """Réponse finale : jetons et latence simulés, déterministes."""
-        entree = (len(self.invite) + len(texte)) // JETONS_PAR_CARACTERES + 800
-        sortie = max(1, len(texte) // JETONS_PAR_CARACTERES)
+        """Réponse finale : jetons/latence réels si un modèle a répondu, simulés sinon."""
+        meta = getattr(self, "_meta", None) or {}
+        entree = meta.get("jetons_entree") or (
+            (len(self.invite) + len(texte)) // JETONS_PAR_CARACTERES + 800)
+        sortie = meta.get("jetons_sortie") or max(1, len(texte) // JETONS_PAR_CARACTERES)
+        latence = meta.get("latence_ms") or 20 + (hash_stable(texte) % 80)
+        brut = {"modele": meta.get("modele") or self.modele, "invite": self.invite}
+        if meta.get("cout") is not None:
+            brut["cout"] = meta["cout"]
         return Reponse(texte=texte,
                        garde_fou_declenche=texte == regles.REFUS_TYPE,
                        garde_fou_id="gf-demo" if texte == regles.REFUS_TYPE else "",
-                       jetons_entree=entree, jetons_sortie=sortie,
-                       latence_ms=20 + (hash_stable(texte) % 80),
-                       brut={"modele": self.modele, "invite": self.invite},
-                       session=session)
+                       jetons_entree=int(entree), jetons_sortie=int(sortie),
+                       latence_ms=int(latence), brut=brut, session=session)
