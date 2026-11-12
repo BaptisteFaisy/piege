@@ -15,12 +15,13 @@ from piege.api.ressources_export import ROUTES as ROUTES_EXPORT
 from piege.api.ressources_findings import ROUTES as ROUTES_FINDINGS
 from piege.api.ressources_mandats import ROUTES as ROUTES_MANDATS
 from piege.api.ressources_rapports import ROUTES as ROUTES_RAPPORTS
+from piege.api.ressources_tenants import ROUTES as ROUTES_TENANTS
 
 __all__ = ["ROUTES", "lire", "lire_ou_erreur", "ecrire", "exiger_role",
            "introuvable", "chemins"]
 
 ROUTES = (ROUTES_MANDATS + ROUTES_CAMPAGNES + ROUTES_FINDINGS
-          + ROUTES_RAPPORTS + ROUTES_EVOLUTIONS + ROUTES_EXPORT)
+          + ROUTES_RAPPORTS + ROUTES_TENANTS + ROUTES_EVOLUTIONS + ROUTES_EXPORT)
 
 
 def chemins() -> list:
