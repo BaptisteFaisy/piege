@@ -22,8 +22,9 @@ from typing import Callable, Optional
 from piege.erreurs import FournisseurIndisponible
 from piege.fournisseurs.base import ReponseModele
 
-__all__ = ["FournisseurInferhub", "extraire_json", "objet_json",
-           "URL_DEFAUT", "MODELE_DEFAUT"]
+__all__ = ["FournisseurInferhub", "extraire_json", "objet_json", "tronquee",
+           "joindre_extrait", "URL_DEFAUT", "MODELE_DEFAUT",
+           "MAX_JETONS_SORTIE_DEFAUT", "MAX_JETONS_PLAFOND", "EXTRAIT_MAX"]
 
 URL_DEFAUT = "https://api.inferhub.dev/v1/chat/completions"
 MODELE_DEFAUT = "ag/gemini-3.8-flash-high"
@@ -34,9 +35,40 @@ TENTATIVES_DEFAUT = 2
 # Sortie structurée : les modèles à raisonnement consomment une part du budget
 # avant de produire l'objet. À 1 500 jetons, un verdict arrivait tronqué ou vide.
 MAX_JETONS_SORTIE_DEFAUT = 4000
+# Une sortie coupée par le budget est rejouée une fois avec un budget doublé,
+# sans jamais dépasser ce plafond (un juge verbeux ne doit pas ruiner la campagne).
+MAX_JETONS_PLAFOND = 12000
+# Un échec du juge doit être explicable : l'extrait brut joint à l'erreur est borné.
+EXTRAIT_MAX = 240
 VAR_TIMEOUT = "PIEGE_LLM_TIMEOUT"
 VAR_TENTATIVES = "PIEGE_LLM_TENTATIVES"
 VAR_MAX_JETONS = "PIEGE_LLM_MAX_JETONS"
+
+
+def tronquee(reponse: dict) -> bool:
+    """Vrai si le fournisseur a coupé la sortie faute de budget.
+
+    `finish_reason: length` distingue une réponse **incomplète** (rejouable avec
+    un budget plus large) d'une réponse complète mais hors schéma (à remonter
+    telle quelle). Sans ce signal, rien n'est supposé.
+    """
+    try:
+        return (reponse["choices"][0].get("finish_reason") or "") == "length"
+    except (KeyError, IndexError, TypeError, AttributeError):
+        return False
+
+
+def joindre_extrait(erreur: FournisseurIndisponible, contenu: str):
+    """Joint à l'erreur un extrait de la sortie brute, pour la rendre explicable.
+
+    Sans lui, un `verdict illisible` journalisé ne dit rien de la cause : objet
+    sans `verdict`, JSON coupé, texte libre… L'extrait est borné (`EXTRAIT_MAX`)
+    et la sortie d'un juge ne contient jamais de secret d'authentification.
+    """
+    brut = contenu or ""
+    erreur.details = dict(erreur.details or {}, extrait=brut[:EXTRAIT_MAX],
+                          longueur=len(brut))
+    return erreur
 
 
 def objet_json(valeur) -> dict:
@@ -205,6 +237,20 @@ class FournisseurInferhub:
         une part des jetons pour leur chaîne de pensée avant de produire
         l'objet. À 1 500 jetons, un verdict pouvait arriver tronqué — voire
         vide — et faire échouer toute une campagne.
+
+        Une sortie **coupée par le budget** (`finish_reason: length`) est rejouée
+        une fois avec un budget doublé, dans la limite de `MAX_JETONS_PLAFOND` :
+        un verdict tronqué n'est pas un verdict. Toute autre sortie illisible
+        remonte immédiatement, avec un extrait brut joint à l'erreur.
         """
-        reponse = self._appeler(messages, graine, self.max_jetons_sortie, 0.0, True)
-        return extraire_json(self._contenu(reponse))
+        budget = self.max_jetons_sortie
+        while True:
+            reponse = self._appeler(messages, graine, budget, 0.0, True)
+            contenu = self._contenu(reponse)
+            try:
+                return extraire_json(contenu)
+            except FournisseurIndisponible as erreur:
+                suivant = min(budget * 2, MAX_JETONS_PLAFOND)
+                if not tronquee(reponse) or suivant <= budget:
+                    raise joindre_extrait(erreur, contenu)
+                budget = suivant

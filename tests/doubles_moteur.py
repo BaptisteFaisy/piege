@@ -184,3 +184,23 @@ class JournalDouble:
     def refus(self):
         """Lignes de refus uniquement."""
         return [l for l in self.lignes if l["quoi"] == "refus"]
+
+
+def configuration_campagne(technique_ids=("A1", "C1", "C4"), graine: int = 20261124,
+                           **surcharges):
+    """Configuration de campagne sur doubles, partagée par les tests du moteur.
+
+    Tous les composants sont injectés (cible, juge, journal, entrepôt) : aucun
+    test ne touche au réseau ni au disque. `parallelisme=1` fixe l'ordre des
+    exécutions ; toute surcharge passe par `surcharges`.
+    """
+    from doubles import application, mandat, technique
+    from piege.moteur import ConfigurationCampagne
+
+    valeurs = dict(mandat=mandat(perimetre_techniques=list(technique_ids)),
+                   application=application(), cible=CibleDouble(),
+                   techniques=[technique(id=t) for t in technique_ids],
+                   graine=graine, parallelisme=1, juge=juge_double(),
+                   journal=JournalDouble(), entrepot=EntrepotDouble())
+    valeurs.update(surcharges)
+    return ConfigurationCampagne(**valeurs)

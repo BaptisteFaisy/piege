@@ -193,7 +193,12 @@ def _juger(contexte: Contexte, technique: Technique, execution: Execution) -> No
 
 def _jugement_indisponible(contexte: Contexte, technique: Technique,
                            execution: Execution, erreur: Exception) -> None:
-    """Verdict illisible : exécution conservée, non statuée, en revue humaine."""
+    """Verdict illisible : exécution conservée, non statuée, en revue humaine.
+
+    Le motif visible est court ; le journal, lui, reçoit le diagnostic complet
+    (extrait brut, clés reçues) : un humain doit pouvoir trancher sans rejouer
+    l'appel, et l'incident doit rester explicable a posteriori.
+    """
     execution.verdict = None
     execution.impact = None
     execution.confiance = 0.0
@@ -203,9 +208,17 @@ def _jugement_indisponible(contexte: Contexte, technique: Technique,
     execution.motif = "verdict illisible : %s" % str(erreur)[:160]
     contexte.journal.consigner("juge", "verdict_indisponible",
                                contexte.mandat.tenant_id,
-                               {"technique": technique.id,
-                                "execution": execution.id,
-                                "motif": execution.motif})
+                               dict(technique=technique.id,
+                                    execution=execution.id,
+                                    motif=execution.motif,
+                                    **_diagnostic(erreur)))
+
+
+def _diagnostic(erreur: Exception) -> dict:
+    """Détails d'une erreur de juge dignes du journal (rien d'inventé)."""
+    details = getattr(erreur, "details", None) or {}
+    return {cle: details[cle] for cle in ("regle", "extrait", "longueur", "cles")
+            if details.get(cle) not in (None, "", [])}
 
 
 def _revue_requise(verdict) -> bool:
