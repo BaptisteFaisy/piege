@@ -33,7 +33,13 @@ VAR_MODELE = "PIEGE_CIBLE_MODELE"
 VAR_URL = "PIEGE_LLM_URL"
 
 MAX_CARACTERES_PAR_DOCUMENT = 1400
-MAX_JETONS_SORTIE = 500
+# Les modèles cibles raisonnent avant de répondre : un budget de sortie trop
+# court est entièrement consommé par la chaîne de raisonnement et la réponse
+# utile arrive **vide**. 3 000 jetons laissent de la place au raisonnement et à
+# la réponse ; une réponse vide déclenche une relance à budget triple.
+MAX_JETONS_SORTIE = 3000
+MULTIPLICATEUR_RELANCE = 3
+VAR_MAX_JETONS = "PIEGE_CIBLE_MAX_JETONS"
 TEMPERATURE = 0.2
 
 
@@ -62,7 +68,9 @@ class CibleInferhub(CibleLocaleDemo):
         spec = dict(spec or {})
         spec.setdefault("modele", os.environ.get(VAR_MODELE, MODELE_DEFAUT))
         super().__init__(spec)
-        self.max_jetons_sortie = int(spec.get("max_jetons_sortie", MAX_JETONS_SORTIE))
+        self.max_jetons_sortie = int(spec.get("max_jetons_sortie")
+                                     or os.environ.get(VAR_MAX_JETONS)
+                                     or MAX_JETONS_SORTIE)
         self.temperature = float(spec.get("temperature", TEMPERATURE))
         self.cout_cumule = 0.0
         self.appels_modele = 0
@@ -91,9 +99,7 @@ class CibleInferhub(CibleLocaleDemo):
              "content": "%s\n\nQUESTION : %s" % (construire_contexte(recuperes), texte)},
         ]
         debut = time.monotonic()
-        reponse = self.fournisseur.completer(
-            messages, graine=hash_stable(texte) & 0xFFFFFFFF,
-            max_jetons=self.max_jetons_sortie, temperature=self.temperature)
+        reponse, budget = self._completer_avec_relance(messages, texte)
         duree = int((time.monotonic() - debut) * 1000)
         self.appels_modele += 1
         cout = (reponse.brut or {}).get("cout")
@@ -102,8 +108,31 @@ class CibleInferhub(CibleLocaleDemo):
         self._meta = {"jetons_entree": reponse.jetons_entree,
                       "jetons_sortie": reponse.jetons_sortie,
                       "latence_ms": duree, "modele": reponse.modele or self.modele,
-                      "cout": cout}
+                      "cout": cout, "budget_sortie": budget,
+                      "reponse_vide": not (reponse.texte or "").strip()}
         return (reponse.texte or "").strip()
+
+    def _completer_avec_relance(self, messages: list, texte: str):
+        """Appel du modèle, relancé à budget triple si la réponse est vide.
+
+        Une réponse vide n'est pas un refus : c'est le plus souvent un budget de
+        sortie absorbé par le raisonnement du modèle. La relance est bornée à un
+        essai supplémentaire et l'échec est tracé (`reponse_vide`), jamais
+        masqué.
+        """
+        graine = hash_stable(texte) & 0xFFFFFFFF
+        budget = self.max_jetons_sortie
+        reponse = self.fournisseur.completer(messages, graine=graine,
+                                             max_jetons=budget,
+                                             temperature=self.temperature)
+        if not (reponse.texte or "").strip():
+            budget *= MULTIPLICATEUR_RELANCE
+            relance = self.fournisseur.completer(messages, graine=graine,
+                                                 max_jetons=budget,
+                                                 temperature=self.temperature)
+            if (relance.texte or "").strip():
+                return relance, budget
+        return reponse, budget
 
     def statistiques(self) -> dict:
         """Consommation réelle de la cible : appels, jetons, coût mesuré."""
