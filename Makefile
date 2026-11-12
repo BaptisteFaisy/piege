@@ -3,7 +3,7 @@
 PYTHON ?= python3
 export PYTHONPATH := src
 
-.PHONY: ci test gardes catalogue demo rapport demo-reel jury clean aide
+.PHONY: ci test gardes catalogue demo rapport demo-reel demo-libre jury clean aide
 
 aide:
 	@echo "make ci        - gardes + catalogue + tests (ce que la CI exécute)"
@@ -14,6 +14,7 @@ aide:
 	@echo "make rapport   - rapport FR + EN de la dernière campagne locale"
 	@echo "make jury      - dossier complet pour le jury (campagne, rapports, clôture, preuves)"
 	@echo "make demo-reel - rejoue une campagne RÉELLE enregistrée (0 appel, 0 €)"
+	@echo "make demo-libre - UNE vraie réponse de modèle, en direct, gratuite (0 €)"
 
 ci: gardes test
 
@@ -39,6 +40,9 @@ rapport:
 
 demo-reel:
 	@$(PYTHON) scripts/jury/demo-reel.py
+
+demo-libre:
+	@$(PYTHON) scripts/demo-libre.py
 
 jury:
 	@$(PYTHON) scripts/jury/dossier.py

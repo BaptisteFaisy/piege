@@ -83,12 +83,15 @@ class CibleInferhub(CibleLocaleDemo):
             from piege.fournisseurs.inferhub import FournisseurInferhub
 
             cle = os.environ.get(VAR_CLE, "")
-            if not cle:
+            url = os.environ.get(VAR_URL) or None
+            if not cle and not url:
                 raise ValueError(
                     "clé de modèle absente : définir %s (jamais dans le dépôt)"
                     % VAR_CLE)
+            # Un endpoint **libre** (Pollinations, Groq free…) n'exige aucune
+            # clé : une URL explicite vaut autorisation, un marqueur suffit.
             self._fournisseur = FournisseurInferhub(
-                url=os.environ.get(VAR_URL) or None, modele=self.modele, cle=cle)
+                url=url, modele=self.modele, cle=cle or "sans-cle")
         return self._fournisseur
 
     def _generer(self, texte: str, recuperes: list, session: str) -> str:

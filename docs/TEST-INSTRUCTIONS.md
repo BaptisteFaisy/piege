@@ -47,7 +47,16 @@ confirmed finding). The replay reads the recording — no key, no account, no
 network — so the judge sees real model outputs at zero cost. Full guide:
 `docs/DEMO-GRATUITE.md`.
 
-## 3ter. The whole dossier for the jury
+## 3ter. One live, free model response
+
+```bash
+make demo-libre    # a real model, called live, leaks the salary grid — free
+```
+
+The free provider (Pollinations, no key) answers in ~8 s. See
+`docs/DEMO-GRATUITE.md` for the alternatives (Groq free, OpenRouter `:free`).
+
+## 3quater. The whole dossier for the jury
 
 ```bash
 make jury           # dossier-jury/ : campaign, reports, attestation, closure,
