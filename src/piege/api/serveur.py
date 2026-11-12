@@ -142,7 +142,7 @@ def servir(port: int = 8080, api: Optional[Api] = None,
            dossier_portail: str = DOSSIER_PORTAIL) -> None:
     """Démarre le serveur de démonstration (bloquant)."""
     classe = type("GestionnairePiege", (_Gestionnaire,),
-                  {"gestionnaire": creer_gestionnaire(api),
+                  {"gestionnaire": staticmethod(creer_gestionnaire(api)),
                    "dossier_portail": dossier_portail})
     serveur = ThreadingHTTPServer(("127.0.0.1", port), classe)
     print("Piège — API et portail sur http://127.0.0.1:%d/" % port)
