@@ -38,6 +38,17 @@ LIBELLES = {
     "effort": {"fr": "Effort", "en": "Effort"},
     "reduction": {"fr": "Réduction du risque", "en": "Risk reduction"},
     "preuve": {"fr": "Preuve", "en": "Evidence"},
+    "preuves": {"fr": "Chaîne de preuves", "en": "Evidence chain"},
+    "preuves_intro": {
+        "fr": "Chaque étape de la chaîne laisse une trace vérifiable : "
+              "l'empreinte est recalculable à partir de l'enregistrement d'origine.",
+        "en": "Every step of the chain leaves a verifiable trace: the fingerprint "
+              "is recomputable from the source record.",
+    },
+    "etape": {"fr": "Étape", "en": "Step"},
+    "statut": {"fr": "Statut", "en": "Status"},
+    "source": {"fr": "Source", "en": "Source"},
+    "empreinte": {"fr": "Empreinte", "en": "Fingerprint"},
     "ferme": {"fr": "Fermé", "en": "Closed"},
     "ouvert": {"fr": "Ouvert", "en": "Open"},
     "effet_de_bord": {"fr": "Effet de bord", "en": "Side effect"},
