@@ -1,10 +1,11 @@
 """Piège — point d'entrée en ligne de commande.
 
-Quatre gestes, tous utilisables hors ligne (CONTRACTS-INTERFACES §15) :
+Cinq gestes, tous utilisables hors ligne (CONTRACTS-INTERFACES §15) :
 
     piege demo        campagne de démonstration sur la cible « Guichet RH »
     piege catalogue   liste les techniques et la couverture par famille
     piege rapport     rapport FR/EN de la dernière campagne locale
+    piege preuves     chaîne de preuves de la dernière campagne locale
     piege validation  vérifie ce qu'un mandat autorise, sans rien envoyer
 
 Codes de sortie : 0 succès, 1 erreur d'usage, 2 opération refusée ou
@@ -49,6 +50,12 @@ def construire_analyseur() -> argparse.ArgumentParser:
     rapport.add_argument("--donnees", default="donnees-locales")
     rapport.add_argument("--tenant", default="")
 
+    preuves = sous.add_parser("preuves", help="chaîne de preuves d'une campagne")
+    preuves.add_argument("--campagne", default="")
+    preuves.add_argument("--donnees", default="donnees-locales")
+    preuves.add_argument("--tenant", default="")
+    preuves.add_argument("--json", action="store_true", dest="en_json")
+
     validation = sous.add_parser("validation", help="périmètre d'un mandat")
     validation.add_argument("--mandat", required=True)
     validation.add_argument("--technique", default="")
@@ -67,6 +74,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             return _commande_catalogue(args)
         if args.commande == "rapport":
             return _commande_rapport(args)
+        if args.commande == "preuves":
+            return _commande_preuves(args)
         return _commande_validation(args)
     except ErreurPiege as erreur:
         print("REFUSÉ [%s] %s" % (erreur.code, erreur.message), file=sys.stderr)
@@ -134,6 +143,22 @@ def _commande_rapport(args) -> int:
     campagne_id, tenant = _resoudre_campagne(entrepot, args)
     for langue in [l for l in args.langues.split(",") if l]:
         print(rapport_depuis_entrepot(entrepot, campagne_id, tenant, langue))
+    return CODE_SUCCES
+
+
+def _commande_preuves(args) -> int:
+    """Affiche la chaîne de preuves d'une campagne (un élément par étape)."""
+    from piege.rapport.preuves import chaines_depuis_entrepot, rendu_preuves
+    from piege.stockage import creer_entrepot
+
+    entrepot = creer_entrepot({"type": "local", "dossier": args.donnees})
+    campagne_id, tenant = _resoudre_campagne(entrepot, args)
+    chain = chaines_depuis_entrepot(entrepot, campagne_id, tenant)
+    if args.en_json:
+        print(json.dumps({"campagne_id": campagne_id, "preuves": chain},
+                         ensure_ascii=False, indent=2))
+        return CODE_SUCCES
+    print(rendu_preuves(chain, "fr") or "aucune preuve pour cette campagne")
     return CODE_SUCCES
 
 

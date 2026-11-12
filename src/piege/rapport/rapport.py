@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any, Iterable, Optional
 
 from piege import severite
+from piege.rapport.preuves import chaines_depuis_entrepot, rendu_preuves
 from piege.rapport.traductions import traduire
 from piege.types import Campagne, Finding, FauxRefus, Severite, SeveriteRefus
 
@@ -54,12 +55,14 @@ def resume(campagne: Campagne, findings: Iterable[Finding],
 def rapport(campagne: Campagne, executions: list, findings: list[Finding],
             faux_refus: list[FauxRefus], langue: str = "fr",
             application: Optional[Any] = None,
-            non_testes: Optional[list] = None) -> str:
+            non_testes: Optional[list] = None,
+            preuves: Optional[list] = None) -> str:
     """Rend le rapport Markdown complet d'une campagne."""
     t = lambda cle: traduire(cle, langue)                     # noqa: E731
     chiffres = resume(campagne, findings, faux_refus, executions)
     parties = [_entete(campagne, application, t),
                _synthese(chiffres, findings, faux_refus, t),
+               rendu_preuves(preuves or [], langue),
                _decouvertes(findings, t),
                _faux_refus(faux_refus, chiffres, t),
                bloc_non_teste(non_testes or [], t),
@@ -209,7 +212,8 @@ def _cout(chiffres: dict, t) -> str:
 
 
 def rapport_depuis_entrepot(entrepot: Any, campagne_id: str, tenant: str,
-                            langue: str = "fr") -> str:
+                            langue: str = "fr",
+                            preuves: Optional[list] = None) -> str:
     """Reconstruit le rapport depuis l'entrepôt (utilisé par l'API et la CLI)."""
     from piege.types import Execution, depuis_dict
 
@@ -229,4 +233,7 @@ def rapport_depuis_entrepot(entrepot: Any, campagne_id: str, tenant: str,
     faux_refus = [depuis_dict(FauxRefus, r) for r in
                   entrepot.lister("faux_refus", tenant_id=tenant,
                                   campagne_id=campagne_id)]
-    return rapport(campagne, executions, findings, faux_refus, langue)
+    chain = preuves if preuves is not None else \
+        chaines_depuis_entrepot(entrepot, campagne_id, tenant)
+    return rapport(campagne, executions, findings, faux_refus, langue,
+                   preuves=chain)

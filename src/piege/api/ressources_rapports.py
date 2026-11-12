@@ -14,6 +14,7 @@ from typing import Any, Optional
 from piege.api.aides import exiger_role, lire, lire_ou_erreur
 from piege.observabilite import PROJECTION_ANNEXE_F, budget_restant, ecart_projection
 from piege.rapport.attestation import attestation
+from piege.rapport.preuves import chaines_depuis_entrepot
 from piege.rapport.rapport import rapport_depuis_entrepot
 from piege.types import Campagne, depuis_dict, maintenant_utc
 
@@ -23,16 +24,23 @@ __all__ = ["ROUTES", "lire_rapport", "lire_attestation", "lire_tendances",
 
 def lire_rapport(api: Any, tenant: str, roles: list, campagne_id: str,
                  requete: Optional[dict] = None, **_) -> dict:
-    """Rapport complet d'une campagne, en français ou en anglais (R15)."""
+    """Rapport complet d'une campagne, en français ou en anglais (R15).
+
+    La réponse porte aussi la **chaîne de preuves** (une trace vérifiable par
+    étape) : le client n'a pas à lire le Markdown pour savoir ce qui a été
+    fait et où le vérifier.
+    """
     del roles
     requete = requete or {}
     langue = str(requete.get("langue", "fr")).lower()
     if langue not in ("fr", "en"):
         langue = "fr"
     lire_ou_erreur(api, "campagnes", campagne_id, tenant)
-    texte = rapport_depuis_entrepot(api.entrepot, campagne_id, tenant, langue)
+    chain = chaines_depuis_entrepot(api.entrepot, campagne_id, tenant)
+    texte = rapport_depuis_entrepot(api.entrepot, campagne_id, tenant, langue,
+                                    preuves=chain)
     return {"campagne_id": campagne_id, "langue": langue, "format": "markdown",
-            "rapport": texte, "genere_le": maintenant_utc()}
+            "rapport": texte, "genere_le": maintenant_utc(), "preuves": chain}
 
 
 def lire_attestation(api: Any, tenant: str, roles: list, id: str,

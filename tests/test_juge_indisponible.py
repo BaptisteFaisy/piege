@@ -8,8 +8,9 @@ import unittest
 from piege.correctifs.rejeu import est_ferme
 from piege.erreurs import FournisseurIndisponible
 from piege.moteur import executer_campagne
-from piege.types import Execution, StatutCampagne, VerdictValeur, fixer_horloge
+from piege.types import StatutCampagne, VerdictValeur, fixer_horloge
 
+from doubles import execution
 from doubles_moteur import (CibleDouble, EntrepotDouble, JournalDouble,
                             configuration_campagne, juge_double)
 
@@ -32,17 +33,6 @@ def juge_selectif(panne_sur):
         return juge_double()(technique_, transcription, fournisseur, graine)
 
     return juge
-
-
-def execution(statut="execute", verdict=VerdictValeur.ECHOUE, erreur="",
-              revue=False) -> Execution:
-    """Exécution de test."""
-    return Execution(id="EXE-1", campagne_id="CMP-1", technique_id="A1",
-                     application_id="APP", tenant_id="TEN", statut=statut,
-                     sondes_envoyees=["s"], reponse_brute="r", jetons=10,
-                     latence_ms=1, verdict=verdict, impact=1, confiance=0.9,
-                     citation="c", motif="m", garde_fou_declenche=False,
-                     revue_humaine=revue, graine=1, erreur=erreur)
 
 
 class TestJugeDefaillant(unittest.TestCase):
