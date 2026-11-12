@@ -147,3 +147,26 @@ textarea {
 .badge.sain { background: var(--faible); color: #05210f; }
 code { color: var(--accent); font-size: .85em; }
 table code { color: var(--texte); }
+
+/* Chaîne de preuves : un tableau dense, lisible sans défilement horizontal. */
+table.preuves {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.8rem;
+  font-size: 0.92rem;
+}
+table.preuves th,
+table.preuves td {
+  border-bottom: 1px solid var(--trait, #d8dee6);
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+table.preuves th {
+  font-weight: 600;
+  background: rgba(127, 127, 127, 0.08);
+}
+table.preuves code {
+  font-size: 0.85em;
+  word-break: break-all;
+}
