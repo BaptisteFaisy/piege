@@ -159,10 +159,22 @@ def _attaquer_et_juger(contexte: Contexte, technique: Technique) -> Execution:
 
 
 def _juger(contexte: Contexte, technique: Technique, execution: Execution) -> None:
-    """Pose le verdict (et la revue humaine) sur une exécution attaquée."""
+    """Pose le verdict (et la revue humaine) sur une exécution attaquée.
+
+    Un juge défaillant ne fait **pas** perdre la campagne : l'exécution est
+    conservée, marquée non statuée et envoyée en revue humaine. Perdre trente
+    sondes parce qu'un appel de modèle a rendu une sortie illisible serait
+    exactement l'inverse du service promis.
+    """
     if execution.erreur or not execution.sondes_envoyees:
         return
-    verdict = _verdict(contexte, technique, execution)
+    from piege.erreurs import FournisseurIndisponible
+
+    try:
+        verdict = _verdict(contexte, technique, execution)
+    except FournisseurIndisponible as erreur:
+        _jugement_indisponible(contexte, technique, execution, erreur)
+        return
     execution.verdict = verdict.verdict
     execution.impact = verdict.impact
     execution.confiance = verdict.confiance
@@ -177,6 +189,23 @@ def _juger(contexte: Contexte, technique: Technique, execution: Execution) -> No
                                                    verdict.verdict),
                                 "impact": verdict.impact,
                                 "confiance": verdict.confiance})
+
+
+def _jugement_indisponible(contexte: Contexte, technique: Technique,
+                           execution: Execution, erreur: Exception) -> None:
+    """Verdict illisible : exécution conservée, non statuée, en revue humaine."""
+    execution.verdict = None
+    execution.impact = None
+    execution.confiance = 0.0
+    execution.citation = ""
+    execution.revue_humaine = True
+    execution.statut = "verdict_indisponible"
+    execution.motif = "verdict illisible : %s" % str(erreur)[:160]
+    contexte.journal.consigner("juge", "verdict_indisponible",
+                               contexte.mandat.tenant_id,
+                               {"technique": technique.id,
+                                "execution": execution.id,
+                                "motif": execution.motif})
 
 
 def _revue_requise(verdict) -> bool:

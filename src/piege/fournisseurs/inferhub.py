@@ -31,8 +31,12 @@ MODELE_DEFAUT = "ag/gemini-3.8-flash-high"
 # faisait échouer des campagnes réelles entières sur un seul appel lent.
 TIMEOUT_DEFAUT = 180
 TENTATIVES_DEFAUT = 2
+# Sortie structurée : les modèles à raisonnement consomment une part du budget
+# avant de produire l'objet. À 1 500 jetons, un verdict arrivait tronqué ou vide.
+MAX_JETONS_SORTIE_DEFAUT = 4000
 VAR_TIMEOUT = "PIEGE_LLM_TIMEOUT"
 VAR_TENTATIVES = "PIEGE_LLM_TENTATIVES"
+VAR_MAX_JETONS = "PIEGE_LLM_MAX_JETONS"
 
 
 def objet_json(valeur) -> dict:
@@ -90,7 +94,8 @@ class FournisseurInferhub:
     def __init__(self, url: Optional[str] = None, modele: Optional[str] = None,
                  cle: Optional[str] = None,
                  transport: Optional[Callable[[str, dict, str], dict]] = None,
-                 timeout: Optional[int] = None, tentatives: Optional[int] = None):
+                 timeout: Optional[int] = None, tentatives: Optional[int] = None,
+                 max_jetons_sortie: Optional[int] = None):
         self.url = url or os.environ.get("PIEGE_LLM_URL", URL_DEFAUT)
         self.modele = modele or os.environ.get("PIEGE_LLM_MODELE", MODELE_DEFAUT)
         self.cle = cle if cle is not None else os.environ.get("PIEGE_LLM_CLE", "")
@@ -101,6 +106,8 @@ class FournisseurInferhub:
                                                      TIMEOUT_DEFAUT))
         self.tentatives = max(1, int(tentatives or os.environ.get(
             "PIEGE_LLM_TENTATIVES", TENTATIVES_DEFAUT)))
+        self.max_jetons_sortie = int(max_jetons_sortie or os.environ.get(
+            "PIEGE_LLM_MAX_JETONS", MAX_JETONS_SORTIE_DEFAUT))
         self._transport = transport
 
     def transport(self) -> Callable[[str, dict, str], dict]:
@@ -192,6 +199,12 @@ class FournisseurInferhub:
 
     def sortie_structuree(self, messages: list[dict], schema: dict,
                           graine: int) -> dict:
-        """Complétion dont la sortie doit être un objet JSON."""
-        reponse = self._appeler(messages, graine, 1500, 0.0, True)
+        """Complétion dont la sortie doit être un objet JSON.
+
+        Le budget de sortie est large : les modèles à raisonnement consomment
+        une part des jetons pour leur chaîne de pensée avant de produire
+        l'objet. À 1 500 jetons, un verdict pouvait arriver tronqué — voire
+        vide — et faire échouer toute une campagne.
+        """
+        reponse = self._appeler(messages, graine, self.max_jetons_sortie, 0.0, True)
         return extraire_json(self._contenu(reponse))
