@@ -33,6 +33,7 @@
     <button data-onglet="benchmark">10 · Benchmark</button>
     <button data-onglet="juge">11 · Judge</button>
     <button data-onglet="integrations">12 · Integrations</button>
+    <button data-onglet="preuves">13 · Evidence chain</button>
   </nav>
 
   <main>
@@ -236,6 +237,18 @@
         <div class="carte"><h3>Python SDK</h3><pre id="snippet-sdk" class="journal"></pre></div>
       </div>
     </section>
+
+    <section id="onglet-preuves" class="onglet">
+      <h2>Evidence chain — one verifiable step per stage</h2>
+      <div class="carte">
+        <button type="button" id="btn-preuves">Load evidence chain</button>
+        <p class="note">Every stage of the chain leaves a verifiable trace: the
+          fingerprint is the SHA-256 of the source record — recomputable, and
+          comparable.</p>
+      </div>
+      <div id="sortie-preuves"></div>
+    </section>
+
   </main>
 
   <footer>
@@ -243,5 +256,6 @@
     <span id="horloge"></span>
   </footer>
   <script src="app.js"></script>
+  <script src="evo.js"></script>
 </body>
 </html>
