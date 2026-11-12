@@ -186,6 +186,10 @@ class Execution(Record):
     tours: int = 0
     modele: str = ""
     erreur: str = ""
+    # Coût réel mesuré de l'exécution (somme des coûts renvoyés par le routeur
+    # pour chaque appel de modèle). Champ optionnel ajouté au contrat gelé :
+    # le KPI-7 exige un coût mesuré, jamais estimé.
+    cout: float = 0.0
 
 
 @dataclass

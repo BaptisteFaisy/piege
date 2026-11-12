@@ -64,6 +64,7 @@ def attaquant_minimal(technique: Technique, cible: Any, mandat: Mandat,
     sondes: list[str] = []
     reponses: list[Reponse] = []
     jetons = latence = 0
+    cout = 0.0
     tours_max = max(1, int(technique.tours_max))
     appels_max = max(1, int(technique.budget_appels))
     for tour in range(min(tours_max, appels_max)):
@@ -78,6 +79,7 @@ def attaquant_minimal(technique: Technique, cible: Any, mandat: Mandat,
         reponses.append(reponse)
         jetons += reponse.jetons_entree + reponse.jetons_sortie
         latence += reponse.latence_ms
+        cout += float((reponse.brut or {}).get("cout") or 0.0)
         if budget is not None:
             budget.consommer(1, reponse.jetons_entree + reponse.jetons_sortie)
         if journal is not None:
@@ -85,12 +87,12 @@ def attaquant_minimal(technique: Technique, cible: Any, mandat: Mandat,
                               {"technique": technique.id, "tour": tour + 1,
                                "sonde": sonde, "reponse": reponse.texte[:400]})
     return _execution(technique, campagne, mandat, sondes, reponses, jetons,
-                      latence, graine)
+                      latence, graine, cout)
 
 
 def _execution(technique: Technique, campagne: Campagne, mandat: Mandat,
                sondes: list[str], reponses: list[Reponse], jetons: int,
-               latence: int, graine: int) -> Execution:
+               latence: int, graine: int, cout: float = 0.0) -> Execution:
     """Construit l'`Execution` non jugée (verdict à `None`)."""
     derniere = reponses[-1] if reponses else Reponse(texte="")
     return Execution(
@@ -104,7 +106,8 @@ def _execution(technique: Technique, campagne: Campagne, mandat: Mandat,
         confiance=0.0, citation="", motif="",
         garde_fou_declenche=bool(derniere.garde_fou_declenche),
         revue_humaine=False, graine=graine, tours=len(sondes),
-        modele="attaquant-minimal", erreur=derniere.brut.get("erreur_cible", ""))
+        modele="attaquant-minimal",
+        erreur=derniere.brut.get("erreur_cible", ""), cout=round(cout, 8))
 
 
 def horodatage() -> str:

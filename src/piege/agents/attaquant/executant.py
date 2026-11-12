@@ -45,6 +45,7 @@ def executer(technique: Technique, cible: Any, mandat: Mandat, campagne: Campagn
     sondes: list[str] = []
     reponses: list[Reponse] = []
     jetons = latence = 0
+    cout = 0.0
     for tour in range(planifier_tours(technique)):
         if _stoppe(arret, budget):
             break
@@ -54,12 +55,13 @@ def executer(technique: Technique, cible: Any, mandat: Mandat, campagne: Campagn
         reponses.append(reponse)
         jetons += reponse.jetons_entree + reponse.jetons_sortie
         latence += reponse.latence_ms
+        cout += float((reponse.brut or {}).get("cout") or 0.0)
         _consommer(budget, reponse)
         _journaliser(journal, mandat, technique, tour, sonde, reponse, session)
         if _suffisant(reponse, tour, technique):
             break
     return _execution(technique, campagne, mandat, sondes, reponses, jetons,
-                      latence, graine)
+                      latence, graine, cout)
 
 
 def _sonde(technique: Technique, graine: int, tour: int) -> str:
@@ -114,7 +116,7 @@ def _suffisant(reponse: Reponse, tour: int, technique: Technique) -> bool:
 
 def _execution(technique: Technique, campagne: Campagne, mandat: Mandat,
                sondes: list[str], reponses: list[Reponse], jetons: int,
-               latence: int, graine: int) -> Execution:
+               latence: int, graine: int, cout: float = 0.0) -> Execution:
     """Construit l'`Execution` non jugée : le verdict vient du juge (lot 5)."""
     derniere = reponses[-1] if reponses else Reponse(texte="")
     return Execution(
@@ -127,4 +129,5 @@ def _execution(technique: Technique, campagne: Campagne, mandat: Mandat,
         confiance=0.0, citation="", motif="",
         garde_fou_declenche=bool(derniere.garde_fou_declenche),
         revue_humaine=False, graine=graine, tours=len(sondes),
-        modele="attaquant-piege", erreur=derniere.brut.get("erreur_cible", ""))
+        modele="attaquant-piege", erreur=derniere.brut.get("erreur_cible", ""),
+        cout=round(cout, 8))

@@ -226,6 +226,10 @@ def _finaliser(contexte: Contexte, executions: list[Execution]) -> None:
     """Statut final, compteurs et journal de fin de campagne."""
     contexte.campagne.appels = contexte.budget.appels_consommes
     contexte.campagne.jetons = contexte.budget.jetons_consommes
+    # Coût réel, sommé depuis ce que le routeur a facturé pour chaque appel
+    # (ENF-10, KPI-7) : jamais une estimation a posteriori.
+    contexte.campagne.cout_mesure = round(
+        sum(float(getattr(e, "cout", 0.0) or 0.0) for e in executions), 6)
     contexte.campagne.techniques_executes = [
         e.technique_id for e in executions if e.statut == "execute"]
     contexte.campagne.statut = _statut_final(contexte, executions)
