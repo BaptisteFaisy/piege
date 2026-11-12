@@ -26,7 +26,12 @@ __all__ = ["FournisseurInferhub", "extraire_json", "URL_DEFAUT", "MODELE_DEFAUT"
 
 URL_DEFAUT = "https://api.inferhub.dev/v1/chat/completions"
 MODELE_DEFAUT = "ag/gemini-3.8-flash-high"
-TIMEOUT_DEFAUT = 60
+# Un modèle qui raisonne met couramment 10 à 60 s par appel : 60 s de délai
+# faisait échouer des campagnes réelles entières sur un seul appel lent.
+TIMEOUT_DEFAUT = 180
+TENTATIVES_DEFAUT = 2
+VAR_TIMEOUT = "PIEGE_LLM_TIMEOUT"
+VAR_TENTATIVES = "PIEGE_LLM_TENTATIVES"
 
 
 def extraire_json(texte: str) -> dict:
@@ -63,11 +68,17 @@ class FournisseurInferhub:
     def __init__(self, url: Optional[str] = None, modele: Optional[str] = None,
                  cle: Optional[str] = None,
                  transport: Optional[Callable[[str, dict, str], dict]] = None,
-                 timeout: int = TIMEOUT_DEFAUT):
+                 timeout: Optional[int] = None, tentatives: Optional[int] = None):
         self.url = url or os.environ.get("PIEGE_LLM_URL", URL_DEFAUT)
         self.modele = modele or os.environ.get("PIEGE_LLM_MODELE", MODELE_DEFAUT)
         self.cle = cle if cle is not None else os.environ.get("PIEGE_LLM_CLE", "")
-        self.timeout = timeout
+        # Un modèle qui raisonne met facilement 20 à 60 s à répondre : le délai
+        # est configurable (PIEGE_LLM_TIMEOUT) et l'appel est rejoué
+        # (PIEGE_LLM_TENTATIVES) — un timeout réseau n'est pas un verdict.
+        self.timeout = int(timeout or os.environ.get("PIEGE_LLM_TIMEOUT",
+                                                     TIMEOUT_DEFAUT))
+        self.tentatives = max(1, int(tentatives or os.environ.get(
+            "PIEGE_LLM_TENTATIVES", TENTATIVES_DEFAUT)))
         self._transport = transport
 
     def transport(self) -> Callable[[str, dict, str], dict]:
@@ -104,22 +115,28 @@ class FournisseurInferhub:
 
     def _appeler(self, messages: list[dict], graine: int, max_jetons: int,
                  temperature: float, json_attendu: bool) -> dict:
-        """Appelle l'API et rend la réponse brute."""
+        """Appelle l'API et rend la réponse brute, avec nouvelles tentatives."""
         if not self.cle:
             raise FournisseurIndisponible(
                 "clé absente : définir PIEGE_LLM_CLE (jamais dans le dépôt)",
                 code="fournisseur_indisponible",
                 details={"regle": "fournisseur.inferhub.cle"})
         charge = self._charge(messages, graine, max_jetons, temperature, json_attendu)
-        try:
-            return self.transport()(self.url, charge, self.cle)
-        except FournisseurIndisponible:
-            raise
-        except Exception as exc:                            # noqa: BLE001
-            raise FournisseurIndisponible(
-                "appel InferHub impossible : %s" % str(exc)[:120],
-                code="fournisseur_indisponible",
-                details={"regle": "fournisseur.inferhub.appel"}) from exc
+        derniere: Optional[Exception] = None
+        for tentative in range(self.tentatives):
+            try:
+                return self.transport()(self.url, charge, self.cle)
+            except FournisseurIndisponible as exc:
+                derniere = exc
+            except Exception as exc:                        # noqa: BLE001
+                derniere = FournisseurIndisponible(
+                    "appel InferHub impossible : %s" % str(exc)[:120],
+                    code="fournisseur_indisponible",
+                    details={"regle": "fournisseur.inferhub.appel",
+                             "tentative": tentative + 1})
+        raise derniere or FournisseurIndisponible(
+            "appel InferHub épuisé", code="fournisseur_indisponible",
+            details={"regle": "fournisseur.inferhub.appel"})
 
     @staticmethod
     def _contenu(reponse: dict) -> str:
