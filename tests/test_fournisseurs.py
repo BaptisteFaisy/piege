@@ -19,7 +19,7 @@ class TestFabrique(unittest.TestCase):
     """La fabrique choisit l'implémentation, et refuse l'inconnu."""
 
     def test_noms_publies(self):
-        self.assertEqual(NOMS, ("local", "inferhub", "bedrock"))
+        self.assertEqual(NOMS, ("local", "inferhub", "openai", "bedrock"))
 
     def test_local_par_defaut(self):
         self.assertIsInstance(creer_fournisseur(), FournisseurLocal)
@@ -27,9 +27,13 @@ class TestFabrique(unittest.TestCase):
     def test_nom_explicite(self):
         self.assertEqual(creer_fournisseur("local").nom, "local")
 
+    def test_openai_est_le_client_compatible(self):
+        """`openai` vise le client OpenAI-compatible — endpoint libre compris."""
+        self.assertEqual(creer_fournisseur("openai").nom, "inferhub")
+
     def test_inconnu(self):
         with self.assertRaises(ValueError):
-            creer_fournisseur("openai")
+            creer_fournisseur("inconnu")
 
 
 class TestFournisseurLocal(unittest.TestCase):

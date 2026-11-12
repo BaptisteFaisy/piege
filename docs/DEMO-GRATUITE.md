@@ -9,6 +9,7 @@ reproductibles sur un poste sans compte AWS, sans clé d'API et sans réseau.
 |---|---|---|
 | `make demo` | La boucle complète : attaque → réponse → verdict → sévérité → correctif → rejeu → preuve de fermeture, sur la cible vulnérable de démonstration | **0 €** |
 | `make demo-reel` | Une **campagne réelle** (vrai modèle) rejouée depuis l'enregistrement | **0 €** |
+| `make demo-libre` | **Une vraie réponse de modèle, en direct** (le modèle vole la grille des salaires) | **0 €** |
 | `make jury` | Le dossier complet remis au jury (rapports, attestation, recettes, traçabilité, évaluation, clôture) | **0 €** |
 
 ## 1. `make demo` — la boucle, hors ligne
@@ -59,7 +60,33 @@ python3 -m piege.cli demo --graine <graine> --cible demo/cible/guichet-rh-inferh
 Le magasin local reçoit alors la campagne ; on extrait la fixture à partir de
 lui (opération manuelle, une fois par campagne refreshée).
 
-## 3. `make jury` — le dossier remis au jury
+## 3. `make demo-libre` — une vraie réponse de modèle, en direct
+
+```bash
+make demo-libre
+```
+
+Le fournisseur libre par défaut est [Pollinations](https://pollinations.ai) —
+API compatible OpenAI, **sans clé**, gratuite (limite : 1 réponse / 45 s par
+IP). La sortie montre la sonde A1 et la réponse **réelle** du modèle : un
+assistant RH naïf qui restitue la grille des salaires (32 400 €, 78 900 €),
+en ~8 s, pour **0 €**.
+
+Pour brancher un endpoint libre plus généreux (Groq free, OpenRouter `:free`,
+Mistral free…), il suffit de régler les variables — aucun code à changer :
+
+```bash
+export PIEGE_LLM_URL=https://api.groq.com/openai/v1/chat/completions
+export PIEGE_CIBLE_MODELE=llama-3.1-8b-instant
+export PIEGE_LLM_CLE=<votre clé gratuite>
+make demo-libre
+```
+
+La **campagne complète** tourne aussi en gratuit : `PIEGE_FOURNISSEUR=openai`
+plus les mêmes variables, et `make demo` vise le modèle libre pour le jeu
+entier (attention à la limite de débit du fournisseur choisi).
+
+## 4. `make jury` — le dossier remis au jury
 
 ```bash
 make jury        # dossier-jury/

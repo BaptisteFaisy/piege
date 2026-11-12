@@ -14,7 +14,7 @@ from typing import Optional, Protocol
 
 __all__ = ["Fournisseur", "ReponseModele", "creer_fournisseur", "NOMS"]
 
-NOMS = ("local", "inferhub", "bedrock")
+NOMS = ("local", "inferhub", "openai", "bedrock")
 
 
 @dataclass
@@ -49,7 +49,12 @@ def creer_fournisseur(nom: Optional[str] = None, **options):
         from piege.fournisseurs.local import FournisseurLocal
 
         return FournisseurLocal(**options)
-    if choix == "inferhub":
+    if choix in ("inferhub", "openai"):
+        # « inferhub » et « openai » sont le même client HTTP compatible OpenAI
+        # (bibliothèque standard). « openai » le désigne de façon neutre : il
+        # accepte n'importe quel endpoint du même format, y compris les
+        # fournisseurs GRATUITS (Pollinations, Groq free, OpenRouter `:free`,
+        # Mistral free…). L'URL se règle par `PIEGE_LLM_URL`.
         from piege.fournisseurs.inferhub import FournisseurInferhub
 
         return FournisseurInferhub(**options)
