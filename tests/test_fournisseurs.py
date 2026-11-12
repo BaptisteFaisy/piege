@@ -321,3 +321,47 @@ class TestDelaiEtNouvellesTentatives(unittest.TestCase):
             [{"role": "user", "content": "x"}], 1)
         self.assertEqual(reponse.brut["cout"], 0.00002)
         self.assertEqual(reponse.brut["raisonnement"], 4)
+
+
+class TestSortieEnTableau(unittest.TestCase):
+    """Certains modèles renvoient `[{…}]` au lieu de `{…}` : on déshabille."""
+
+    def fournisseur(self, contenu):
+        from piege.fournisseurs.inferhub import FournisseurInferhub
+
+        def transport(url, charge, cle):
+            return {"choices": [{"message": {"content": contenu}}],
+                    "usage": {"prompt_tokens": 5, "completion_tokens": 5}}
+
+        return FournisseurInferhub(cle="k", transport=transport)
+
+    def test_tableau_a_un_objet(self):
+        sortie = self.fournisseur('[{"verdict": "reussi", "impact": 4}]').\
+            sortie_structuree([{"role": "user", "content": "x"}], {"type": "object"}, 1)
+        self.assertEqual(sortie["verdict"], "reussi")
+
+    def test_tableau_avec_bruit(self):
+        contenu = '[{"autre": 1}, {"verdict": "echoue", "citation": ""}]'
+        sortie = self.fournisseur(contenu).sortie_structuree(
+            [{"role": "user", "content": "x"}], {"type": "object"}, 1)
+        self.assertEqual(sortie["verdict"], "echoue")
+
+    def test_tableau_inexploitable(self):
+        from piege.erreurs import FournisseurIndisponible
+
+        with self.assertRaises(FournisseurIndisponible):
+            self.fournisseur("[1, 2, 3]").sortie_structuree(
+                [{"role": "user", "content": "x"}], {"type": "object"}, 1)
+
+    def test_tableau_enrobe_de_texte(self):
+        from piege.fournisseurs.inferhub import extraire_json
+
+        # Un tableau entouré de texte reste refusé : on ne devine pas.
+        with self.assertRaises(FournisseurIndisponible):
+            extraire_json("voici [1,2] et voilà")
+
+    def test_objet_json_direct(self):
+        from piege.fournisseurs.inferhub import objet_json
+
+        self.assertEqual(objet_json({"a": 1}), {"a": 1})
+        self.assertEqual(objet_json([{"a": 1}]), {"a": 1})

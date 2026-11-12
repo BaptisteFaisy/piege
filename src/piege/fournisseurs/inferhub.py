@@ -22,7 +22,8 @@ from typing import Callable, Optional
 from piege.erreurs import FournisseurIndisponible
 from piege.fournisseurs.base import ReponseModele
 
-__all__ = ["FournisseurInferhub", "extraire_json", "URL_DEFAUT", "MODELE_DEFAUT"]
+__all__ = ["FournisseurInferhub", "extraire_json", "objet_json",
+           "URL_DEFAUT", "MODELE_DEFAUT"]
 
 URL_DEFAUT = "https://api.inferhub.dev/v1/chat/completions"
 MODELE_DEFAUT = "ag/gemini-3.8-flash-high"
@@ -34,6 +35,28 @@ VAR_TIMEOUT = "PIEGE_LLM_TIMEOUT"
 VAR_TENTATIVES = "PIEGE_LLM_TENTATIVES"
 
 
+def objet_json(valeur) -> dict:
+    """Normalise la sortie d'un modèle en objet JSON unique.
+
+    Certains modèles enveloppent leur réponse dans un tableau (`[{…}]`) malgré
+    la consigne : on déshabille un tableau à un seul objet, et sinon on retient
+    l'objet qui porte la clé attendue. Rien n'est deviné au-delà.
+    """
+    if isinstance(valeur, dict):
+        return valeur
+    if isinstance(valeur, list):
+        objets = [v for v in valeur if isinstance(v, dict)]
+        if len(objets) == 1:
+            return objets[0]
+        for objet in objets:
+            if "verdict" in objet:
+                return objet
+    raise FournisseurIndisponible(
+        "sortie du modèle inexploitable : objet JSON attendu, reçu %s"
+        % type(valeur).__name__, code="fournisseur_indisponible",
+        details={"regle": "fournisseur.inferhub.json"})
+
+
 def extraire_json(texte: str) -> dict:
     """Extrait l'objet JSON d'une réponse de modèle (fences, texte autour)."""
     if not texte:
@@ -42,14 +65,13 @@ def extraire_json(texte: str) -> dict:
                                       details={"regle": "fournisseur.inferhub.json"})
     nettoye = re.sub(r"^```[a-zA-Z]*\s*|\s*```$", "", texte.strip())
     try:
-        return json.loads(nettoye)
+        return objet_json(json.loads(nettoye))
     except json.JSONDecodeError:
         pass
-    debut = nettoye.find("{")
-    fin = nettoye.rfind("}")
+    debut, fin = nettoye.find("{"), nettoye.rfind("}")
     if debut >= 0 and fin > debut:
         try:
-            return json.loads(nettoye[debut:fin + 1])
+            return objet_json(json.loads(nettoye[debut:fin + 1]))
         except json.JSONDecodeError as exc:
             raise FournisseurIndisponible(
                 "sortie JSON illisible du modèle",
