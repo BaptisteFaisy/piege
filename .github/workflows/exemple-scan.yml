@@ -1,0 +1,49 @@
+name: Exemple — scan Piège
+
+# MODÈLE À COPIER dans le dépôt d'un client — désactivé par défaut.
+# Ce workflow ne se déclenche QUE manuellement (workflow_dispatch) : il ne
+# tourne jamais sur pull_request/push du dépôt Piège lui-même, pour ne pas
+# interférer avec les checks requis (ci, ci-budget, couche0).
+#
+# Dans un dépôt client, on le déclencherait plutôt sur un changement de prompt
+# ou de modèle (`on: push: paths: ['prompts/**', 'model.json']`) pour rejouer un
+# scan ciblé à chaque modification — c'est la promesse « continu » du service.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Spécification de cible (JSON) pour un scan hors ligne"
+        required: false
+        default: "demo/cible/guichet-rh.json"
+      techniques:
+        description: "Techniques à jouer (CSV, vide = toutes)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: piege-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Scan Piège (hors ligne)
+        uses: ./
+        with:
+          target: ${{ inputs.target }}
+          techniques: ${{ inputs.techniques }}
+          seed: "20261124"
+
+      - name: Résumé
+        run: echo "Scan terminé — voir les sorties de l'étape précédente."
