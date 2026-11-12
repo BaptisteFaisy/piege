@@ -1,0 +1,91 @@
+name: "Piège scan"
+description: >
+  Run a continuous AI-application penetration test (Piège) against a target and
+  report the findings. Works offline against a target spec, or against a remote
+  Piège API. No third-party dependency: the engine is standard-library Python.
+author: "BaptisteFaisy"
+branding:
+  icon: "shield"
+  color: "red"
+
+inputs:
+  api_url:
+    description: "Base URL of a running Piège API. Empty = offline scan of a local target spec."
+    required: false
+    default: ""
+  tenant_token:
+    description: "Identity token (jeton:<tenant>:<role>). Required when api_url is set."
+    required: false
+    default: ""
+  target:
+    description: "Path to a target spec JSON for the offline scan."
+    required: false
+    default: "demo/cible/guichet-rh.json"
+  techniques:
+    description: "Comma-separated technique ids to run (empty = all applicable)."
+    required: false
+    default: ""
+  seed:
+    description: "Reproducibility seed (0 = derive from the run)."
+    required: false
+    default: "0"
+  comment:
+    description: "Post a summary comment on the pull request (true/false)."
+    required: false
+    default: "false"
+
+outputs:
+  findings:
+    description: "Number of findings produced by the scan."
+    value: ${{ steps.scan.outputs.findings }}
+  critiques:
+    description: "Number of critical findings."
+    value: ${{ steps.scan.outputs.critiques }}
+  campagne_id:
+    description: "Identifier of the campaign that was run."
+    value: ${{ steps.scan.outputs.campagne_id }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+
+    - name: Install Piège (no third-party dependency)
+      shell: bash
+      run: |
+        python -m pip install --quiet --upgrade pip
+        python -m pip install --quiet -e .
+
+    - name: Run scan
+      id: scan
+      shell: bash
+      env:
+        PIEGE_API_URL: ${{ inputs.api_url }}
+        PIEGE_TOKEN: ${{ inputs.tenant_token }}
+        PIEGE_TARGET: ${{ inputs.target }}
+        PIEGE_TECHNIQUES: ${{ inputs.techniques }}
+        PIEGE_SEED: ${{ inputs.seed }}
+      run: |
+        python .github/actions/piege-scan/scan.py >> "$GITHUB_OUTPUT"
+
+    - name: Comment on pull request
+      if: ${{ inputs.comment == 'true' && github.event_name == 'pull_request' }}
+      shell: bash
+      env:
+        FINDINGS: ${{ steps.scan.outputs.findings }}
+        CRITIQUES: ${{ steps.scan.outputs.critiques }}
+        CAMPAGNE: ${{ steps.scan.outputs.campagne_id }}
+      run: |
+        {
+          echo "### Piège scan"
+          echo ""
+          echo "- Campaign: \`${CAMPAGNE}\`"
+          echo "- Findings: **${FINDINGS}** (critical: **${CRITIQUES}**)"
+          echo ""
+          echo "_Continuous AI-application penetration test. Severity is computed by code, never by a model._"
+        } > /tmp/piege-comment.md
+        gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/piege-comment.md
+      continue-on-error: true
