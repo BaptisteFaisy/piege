@@ -131,3 +131,19 @@ footer {
   border-top: 1px solid var(--bordure);
   color: var(--discret); font-size: .78rem;
 }
+
+/* Évolutions : textarea, verdicts du scanner, badges de niveau */
+textarea {
+  width: 100%; min-height: 120px; resize: vertical;
+  background: #0d1017; color: var(--texte);
+  border: 1px solid var(--bordure); border-radius: 6px; padding: .5rem;
+  font-family: "SFMono-Regular", Consolas, monospace; font-size: .85rem;
+}
+.carte.malveillant { border-left: 4px solid var(--critique); }
+.carte.suspect { border-left: 4px solid var(--eleve); }
+.carte.sain { border-left: 4px solid var(--faible); }
+.badge.malveillant { background: var(--critique); color: #20060a; }
+.badge.suspect { background: var(--eleve); color: #241300; }
+.badge.sain { background: var(--faible); color: #05210f; }
+code { color: var(--accent); font-size: .85em; }
+table code { color: var(--texte); }

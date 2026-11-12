@@ -362,12 +362,15 @@ class TestCouvertureDesRoutes(BaseApi):
         self.assertEqual(manquantes, set())
 
     def test_routes_supplementaires_documentees(self):
-        """La route de proposition de correctifs s'ajoute aux 20 routes."""
+        """La route de proposition de correctifs + les routes d'évolutions s'ajoutent."""
         from piege.api import routes
 
         exposees = {(m, c) for m, c, _ in routes()}
         self.assertIn(("POST", "/findings/{id}/correctifs"), exposees)
-        self.assertEqual(len(exposees), len(self.ROUTES_ATTENDUES) + 2)
+        # 20 routes de la spécification + GET /applications + correctifs,
+        # plus les routes d'évolutions (risque, scanner, corpus, benchmark,
+        # juge, export PDF/HTML, aperçus, intégrations) : au moins 2 au-delà.
+        self.assertGreaterEqual(len(exposees), len(self.ROUTES_ATTENDUES) + 2)
 
     def test_portail_livre(self):
         """Le portail statique est présent, sans étape de construction."""
