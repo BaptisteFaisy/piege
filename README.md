@@ -49,12 +49,13 @@ make rapport     # customer report, French and English
 base), so the whole loop — probe, judge, severity, fix, replay, regression,
 side-effect — is reproducible on a laptop and in CI.
 
-Point it at real AWS services with the optional extras:
+Point it at real AWS services with the optional extras (the only ones that need
+third-party packages — the offline `make ci` / `make demo` path uses none):
 
 ```bash
-pip install -e '.[dev,aws,llm]'
+pip install -e '.[aws,llm]'            # boto3 + pyyaml, optional
 export PIEGE_FOURNISSEUR=bedrock AWS_REGION=eu-west-3
-python3 -m piege.cli demo --cible demo/cible/guichet-rh.yaml
+python3 -m piege.cli demo --cible demo/cible/guichet-rh.json
 ```
 
 ## Layout
