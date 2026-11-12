@@ -3,7 +3,7 @@
 PYTHON ?= python3
 export PYTHONPATH := src
 
-.PHONY: ci test gardes catalogue demo rapport clean aide
+.PHONY: ci test gardes catalogue demo rapport jury clean aide
 
 aide:
 	@echo "make ci        - gardes + catalogue + tests (ce que la CI exécute)"
@@ -12,6 +12,7 @@ aide:
 	@echo "make catalogue - liste les 60 techniques et la couverture par famille"
 	@echo "make demo      - campagne de démonstration sur la cible Guichet RH (local)"
 	@echo "make rapport   - rapport FR + EN de la dernière campagne locale"
+	@echo "make jury      - dossier complet pour le jury (campagne, rapports, clôture, preuves)"
 
 ci: gardes test
 
@@ -35,6 +36,9 @@ demo:
 rapport:
 	@$(PYTHON) -m piege.cli rapport --derniere --langues fr,en
 
+jury:
+	@$(PYTHON) scripts/jury/dossier.py
+
 clean:
 	@find . -name '__pycache__' -type d -prune -exec rm -rf {} +
-	@rm -rf .pytest_cache preuves-locales
+	@rm -rf .pytest_cache preuves-locales dossier-jury

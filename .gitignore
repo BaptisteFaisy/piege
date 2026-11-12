@@ -10,3 +10,4 @@ preuves-locales/
 donnees-locales/
 *.local.json
 .DS_Store
+dossier-jury/
