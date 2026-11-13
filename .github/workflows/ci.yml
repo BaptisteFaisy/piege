@@ -94,6 +94,8 @@ jobs:
             echo "catalogue ou valideur absent (lot 2 non mergé) — contrôle sauté"
           fi
 
+      - name: Installer pytest (absent de ubuntu-latest)
+        run: python3 -m pip install --quiet --break-system-packages pytest
       - name: Tests du projet
         run: |
           if python3 -m pytest --version >/dev/null 2>&1; then
