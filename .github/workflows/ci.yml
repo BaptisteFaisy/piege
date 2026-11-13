@@ -30,7 +30,7 @@ env:
 jobs:
   ci:
     name: ci
-    runs-on: [self-hosted, linux, x64, piege-worker]
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
